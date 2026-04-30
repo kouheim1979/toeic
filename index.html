@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOEIC形式 英語トレーナー</title>
+  <style>
+    :root {
+      --bg: #eef5ff;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --success-bg: #e8f8ef;
+      --success-text: #166534;
+      --danger-bg: #feefef;
+      --danger-text: #991b1b;
+      --border: #dbe4f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, #f4f8ff 0%, #eaf1fb 100%);
+      line-height: 1.6;
+      font-size: 16px;
+    }
+    .app { max-width: 900px; margin: 0 auto; padding: 16px; }
+    .header, .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.06);
+    }
+    .header { padding: 20px; margin-bottom: 16px; }
+    h1 { margin: 0 0 8px; font-size: 1.7rem; }
+    .subtitle { margin: 0 0 8px; color: #1e3a8a; font-weight: 600; }
+    .notice { margin: 0; font-size: 0.9rem; color: var(--muted); }
+    .card { padding: 18px; margin-bottom: 14px; }
+    .grid { display: grid; gap: 10px; }
+    .mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .summary-item {
+      background: #f8fbff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+    .summary-item strong { display: block; font-size: 1.2rem; color: #1e40af; }
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--primary);
+      color: #fff;
+      transition: 0.2s;
+      width: 100%;
+    }
+    button:hover:not(:disabled), button:focus-visible:not(:disabled) { background: var(--primary-dark); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-secondary { background: #64748b; }
+    .btn-secondary:hover:not(:disabled), .btn-secondary:focus-visible:not(:disabled) { background: #475569; }
+    .btn-danger { background: #dc2626; }
+    .btn-danger:hover:not(:disabled), .btn-danger:focus-visible:not(:disabled) { background: #b91c1c; }
+    .actions { display: flex; gap: 10px; margin-top: 12px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .badge {
+      display: inline-block;
+      background: #e0ecff;
+      color: #1e3a8a;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .passage {
+      background: #f7fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      white-space: pre-wrap;
+      margin-bottom: 12px;
+    }
+    .choice-list { display: grid; gap: 8px; margin-top: 10px; }
+    .choice {
+      text-align: left;
+      background: #fff;
+      border: 2px solid var(--border);
+      color: var(--text);
+      font-weight: 600;
+    }
+    .choice.selected { border-color: #2563eb; background: #eff6ff; }
+    .choice.correct { border-color: #16a34a; background: var(--success-bg); color: var(--success-text); }
+    .choice.wrong { border-color: #dc2626; background: var(--danger-bg); color: var(--danger-text); }
+    .result-banner { margin-top: 10px; padding: 10px; border-radius: 8px; font-weight: 700; }
+    .result-ok { background: var(--success-bg); color: var(--success-text); }
+    .result-ng { background: var(--danger-bg); color: var(--danger-text); }
+    .explanation {
+      margin-top: 10px;
+      border-left: 5px solid #3b82f6;
+      background: #eff6ff;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .small { color: var(--muted); font-size: 0.9rem; }
+    ul { padding-left: 18px; }
+    .empty { padding: 12px; border: 1px dashed #94a3b8; border-radius: 10px; color: #334155; background: #f8fafc; }
+    .history-list li { margin-bottom: 8px; }
+    @media (max-width: 640px) {
+      .app { padding: 10px; }
+      h1 { font-size: 1.35rem; }
+      .mode-grid, .summary-grid { grid-template-columns: 1fr; }
+      .actions { flex-direction: column; }
+      button { padding: 13px 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <h1>TOEIC形式 英語トレーナー</h1>
+      <p class="subtitle">TOEIC形式のオリジナル模擬問題でスコアアップ</p>
+      <p class="notice">本アプリはTOEIC公式・公認アプリではありません。実際のTOEIC過去問・公式問題は収録していません。</p>
+    </header>
+    <section id="app-root" class="card" aria-live="polite"></section>
+  </main>
+
+  <script>
+    const HISTORY_KEY = 'toeicStyleEnglishTrainerHistory';
+    const MISTAKES_KEY = 'toeicStyleEnglishTrainerMistakes';
+
+    const QUESTIONS = [
+      { id: 'P5-001', part: 5, category: 'grammar', difficulty: 'easy', tags: ['文法', '接続詞'], passage: '', question: 'The meeting was postponed _____ the manager was absent.', choices: ['because', 'although', 'despite', 'during'], answer: 0, explanation: 'the manager was absent は主語+動詞の節なので、節を導く接続詞が必要です。理由を表す because が最適です。' },
+      { id: 'P5-002', part: 5, category: 'vocabulary', difficulty: 'easy', tags: ['語彙', '業務連絡文'], passage: '', question: 'Please submit your expense report by Friday to avoid _____ in reimbursement.', choices: ['delay', 'delays', 'delayed', 'delaying'], answer: 1, explanation: 'avoid の後ろは名詞または動名詞。ここでは in reimbursement を修飾する複数名詞 delays（遅延）が自然です。' },
+      { id: 'P5-003', part: 5, category: 'preposition', difficulty: 'medium', tags: ['前置詞', '文法'], passage: '', question: 'All interns must check _____ with the HR desk before 9 a.m.', choices: ['at', 'in', 'to', 'for'], answer: 1, explanation: 'check in は「到着を報告する」という熟語です。前置詞 in が正解です。' },
+      { id: 'P5-004', part: 5, category: 'parts-of-speech', difficulty: 'medium', tags: ['品詞', '文法'], passage: '', question: 'The new software is highly _____ and easy for first-time users.', choices: ['intuitively', 'intuition', 'intuitive', 'intuitiveness'], answer: 2, explanation: 'be動詞の後ろで主語 software を説明する形容詞が必要です。intuitive が正しい品詞です。' },
+      { id: 'P5-005', part: 5, category: 'conjunction', difficulty: 'medium', tags: ['接続詞', '業務連絡文'], passage: '', question: 'You can either attend the workshop in person _____ join online.', choices: ['but', 'or', 'so', 'yet'], answer: 1, explanation: 'either A or B の構文です。or が必須になります。' },
+      { id: 'P5-006', part: 5, category: 'grammar', difficulty: 'easy', tags: ['文法', '時制'], passage: '', question: 'Ms. Green _____ the monthly report before the deadline yesterday.', choices: ['finish', 'finishes', 'finished', 'has finished'], answer: 2, explanation: 'yesterday があるため過去時制 finished が正解です。' },
+      { id: 'P5-007', part: 5, category: 'vocabulary', difficulty: 'hard', tags: ['語彙', '広告文'], passage: '', question: 'The advertisement aims to _____ younger customers to the brand.', choices: ['attract', 'attraction', 'attractive', 'attracted'], answer: 0, explanation: 'aim to の後ろは動詞原形。意味的にも「引きつける」attract が適切です。' },
+      { id: 'P5-008', part: 5, category: 'preposition', difficulty: 'medium', tags: ['前置詞', '業務連絡文'], passage: '', question: 'The final decision will depend _____ the client’s budget.', choices: ['of', 'to', 'on', 'with'], answer: 2, explanation: 'depend on はセットで覚える表現です。' },
+      { id: 'P5-009', part: 5, category: 'parts-of-speech', difficulty: 'hard', tags: ['品詞', 'メール文'], passage: '', question: 'We appreciate your _____ response to our inquiry.', choices: ['promptly', 'promptness', 'prompt', 'prompts'], answer: 2, explanation: 'response を修飾するので形容詞 prompt（迅速な）が必要です。' },
+      { id: 'P5-010', part: 5, category: 'grammar', difficulty: 'medium', tags: ['文法', '関係代名詞'], passage: '', question: 'The employee _____ solved the server issue will receive recognition.', choices: ['who', 'which', 'whom', 'whose'], answer: 0, explanation: '先行詞が人（employee）で、主語として節を導くため who が正解です。' },
+      { id: 'P6-001', part: 6, category: 'email', difficulty: 'medium', tags: ['メール文', '接続詞'], passage: 'Subject: Schedule Change\n\nHello Team,\n\nOur product demo has been moved to Thursday at 2:00 p.m. _____ several clients requested additional preparation time.\n\nPlease update your calendars and send any questions by Wednesday noon.\n\nBest regards,\nNina', question: '空欄に最も適切な語を選んでください。', choices: ['because', 'unless', 'while', 'however'], answer: 0, explanation: '後半は理由説明なので because が自然です。however は逆接で文構造が合いません。' },
+      { id: 'P6-002', part: 6, category: 'notice', difficulty: 'easy', tags: ['お知らせ文', '前置詞'], passage: 'Office Notice\n\nThe elevator inspection will take place _____ May 12 from 9:00 to 11:00 a.m.\n\nDuring this time, please use the stairs on the west side.', question: '空欄に最も適切な語を選んでください。', choices: ['in', 'on', 'at', 'for'], answer: 1, explanation: '日付の前には on を使います。' },
+      { id: 'P6-003', part: 6, category: 'business', difficulty: 'medium', tags: ['業務連絡文', '品詞'], passage: 'Internal Memo\n\nTo improve customer support, we are introducing a new ticket system. Training sessions will be held weekly, and attendance is _____ recommended for all staff members.', question: '空欄に最も適切な語を選んでください。', choices: ['strong', 'strongly', 'strength', 'stronger'], answer: 1, explanation: 'recommended（推奨される）を修飾する副詞 strongly が必要です。' },
+      { id: 'P6-004', part: 6, category: 'schedule', difficulty: 'hard', tags: ['スケジュール文', '語彙'], passage: 'Training Schedule Update\n\nThe morning session starts at 9:30, and the afternoon session begins at 1:30. Participants are asked to arrive 15 minutes early to complete registration _____.', question: '空欄に最も適切な語を選んでください。', choices: ['form', 'forms', 'formal', 'formation'], answer: 1, explanation: 'registration forms（登録用紙）が自然な名詞句です。複数形 forms が最適です。' },
+      { id: 'P6-005', part: 6, category: 'advertisement', difficulty: 'medium', tags: ['広告文', '文法'], passage: 'City Fitness Promotion\n\nJoin this month and get two personal training sessions for free. Members who sign up before April 30 _____ receive a complimentary nutrition guide.', question: '空欄に最も適切な語を選んでください。', choices: ['also', 'too', 'either', 'still'], answer: 0, explanation: '肯定文で「〜も」を動詞の前で表すには also が自然です。' },
+      { id: 'P7-001', part: 7, category: 'email', difficulty: 'medium', tags: ['メール文', '読解'], passage: 'From: Alex Park\nTo: Supply Team\n\nHi everyone,\n\nThe shipment for order #8842 arrived this morning, but three boxes were damaged. I have already contacted the courier company, and they will send a representative tomorrow to inspect the items.\n\nPlease do not discard any packaging until the inspection is complete. Also, send me photos of the damaged boxes by 4 p.m. today.\n\nThanks,\nAlex', question: 'Alex がチームに依頼していることはどれですか。', choices: ['破損箱をすぐ廃棄する', '本日16時までに写真を送る', '配送会社へ再連絡する', '注文番号を変更する'], answer: 1, explanation: '本文に send me photos ... by 4 p.m. today とあるため、写真送付が依頼内容です。' },
+      { id: 'P7-002', part: 7, category: 'notice', difficulty: 'easy', tags: ['お知らせ文', '読解'], passage: 'Library Notice\n\nStarting next Monday, the third-floor study area will be reserved for group projects from 3:00 p.m. to 7:00 p.m. on weekdays. Individual study desks on the second floor remain open during normal hours.\n\nThank you for your cooperation.', question: '平日15時〜19時にグループ学習ができる場所はどこですか。', choices: ['1階ロビー', '2階個人席', '3階学習エリア', '屋外テラス'], answer: 2, explanation: 'お知らせ文で third-floor study area がその時間帯にグループ用と明記されています。' },
+      { id: 'P7-003', part: 7, category: 'advertisement', difficulty: 'medium', tags: ['広告文', '読解'], passage: 'Weekend Career Seminar\n\nLooking to improve your interview skills? Join our one-day seminar on Saturday, June 8.\n- Morning: Resume workshop\n- Afternoon: Mock interviews with HR professionals\n\nEarly registration (by May 20) includes a free feedback session next week.', question: '無料のフィードバックセッションを受ける条件はどれですか。', choices: ['6月8日に参加する', '履歴書を事前提出する', '5月20日までに早期登録する', '午後の面接練習のみ受講する'], answer: 2, explanation: 'Early registration (by May 20) includes ... とあるため、5月20日までの登録が条件です。' },
+      { id: 'P7-004', part: 7, category: 'schedule', difficulty: 'hard', tags: ['スケジュール文', '読解'], passage: 'Project Timeline\n\nMay 3: Initial draft due\nMay 6: Team review meeting\nMay 10: Client presentation rehearsal\nMay 12: Final presentation\n\nNote: Slides must be shared with the design team at least two days before the final presentation.', question: 'スライド共有の締切日はいつですか。', choices: ['5月6日', '5月8日', '5月10日', '5月12日'], answer: 2, explanation: '最終発表は5月12日で、2日前までに共有するので5月10日が締切です。' },
+      { id: 'P7-005', part: 7, category: 'business', difficulty: 'medium', tags: ['業務連絡文', '読解'], passage: 'Team Message\n\nDue to system maintenance, the customer database will be unavailable from 8:00 p.m. to 10:00 p.m. tonight. Please complete urgent updates before 7:45 p.m. If you need to access records during maintenance, contact IT support in advance.', question: 'メッセージの主な目的は何ですか。', choices: ['新しい顧客管理ソフトを紹介する', 'メンテナンス時間と事前対応を知らせる', 'ITサポートの連絡先を変更する', '夜間勤務の申請方法を説明する'], answer: 1, explanation: '本文はメンテナンス時間と、その前に更新を済ませる注意を伝える内容です。' }
+    ];
+
+    const appState = {
+      mode: 'home',
+      currentQuestions: [],
+      currentIndex: 0,
+      selectedChoiceIndex: null,
+      answered: false,
+      currentResult: null,
+      sessionResults: []
+    };
+
+    function escapeHtml(text) {
+      return String(text ?? '').replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
+    }
+
+    function shuffleArray(array) {
+      const cloned = Array.isArray(array) ? [...array] : [];
+      for (let i = cloned.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cloned[i], cloned[j]] = [cloned[j], cloned[i]];
+      }
+      return cloned;
+    }
+
+    function getHistory() {
+      try {
+        const raw = localStorage.getItem(HISTORY_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function saveHistory(history) {
+      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(Array.isArray(history) ? history : [])); } catch (_) {}
+    }
+
+    function getMistakes() {
+      try {
+        const raw = localStorage.getItem(MISTAKES_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function saveMistakes(mistakes) {
+      try {
+        const unique = [...new Set((Array.isArray(mistakes) ? mistakes : []).map(String))];
+        localStorage.setItem(MISTAKES_KEY, JSON.stringify(unique));
+      } catch (_) {}
+    }
+
+    function saveAnswerResult(question, selectedIndex, isCorrect) {
+      if (!question || typeof question.id !== 'string') return;
+      const history = getHistory();
+      history.push({
+        questionId: question.id,
+        part: question.part,
+        selectedIndex,
+        correctIndex: question.answer,
+        isCorrect,
+        answeredAt: new Date().toISOString(),
+        tags: Array.isArray(question.tags) ? question.tags : []
+      });
+      saveHistory(history);
+
+      const mistakes = new Set(getMistakes());
+      if (isCorrect) mistakes.delete(question.id);
+      else mistakes.add(question.id);
+      saveMistakes([...mistakes]);
+    }
+
+    function calculateStats() {
+      const history = getHistory();
+      const total = history.length;
+      const correct = history.filter((h) => h && h.isCorrect).length;
+      const rate = total ? Math.round((correct / total) * 100) : 0;
+      const mistakesCount = getMistakes().length;
+      const partStats = [5, 6, 7].map((part) => {
+        const records = history.filter((h) => h && h.part === part);
+        const c = records.filter((h) => h.isCorrect).length;
+        return { part, total: records.length, correct: c, rate: records.length ? Math.round((c / records.length) * 100) : 0 };
+      });
+      return { total, correct, rate, mistakesCount, partStats, history };
+    }
+
+    function getQuestionsByMode(mode, part) {
+      const valid = QUESTIONS.filter((q) => q && typeof q.id === 'string' && Array.isArray(q.choices) && q.choices.length === 4 && typeof q.answer === 'number');
+      if (mode === 'part') return valid.filter((q) => q.part === part);
+      if (mode === 'random') return shuffleArray(valid);
+      if (mode === 'mistake') {
+        const set = new Set(getMistakes());
+        return valid.filter((q) => set.has(q.id));
+      }
+      return [];
+    }
+
+    function renderHome() {
+      appState.mode = 'home';
+      const root = document.getElementById('app-root');
+      const stats = calculateStats();
+      root.innerHTML = `
+        <h2>ホーム</h2>
+        <p class="small">モードを選んで学習を開始してください。</p>
+        <div class="card" style="margin: 8px 0 14px;">
+          <h3>学習サマリー</h3>
+          <div class="grid summary-grid">
+            <div class="summary-item"><span>総回答数</span><strong>${stats.total}</strong></div>
+            <div class="summary-item"><span>正解数</span><strong>${stats.correct}</strong></div>
+            <div class="summary-item"><span>正答率</span><strong>${stats.rate}%</strong></div>
+            <div class="summary-item"><span>間違えた問題数</span><strong>${stats.mistakesCount}</strong></div>
+          </div>
+        </div>
+        <div class="grid mode-grid">
+          <button onclick="startPractice('part', 5)">Part 5演習</button>
+          <button onclick="startPractice('part', 6)">Part 6演習</button>
+          <button onclick="startPractice('part', 7)">Part 7演習</button>
+          <button onclick="startPractice('random')">ランダム演習</button>
+          <button onclick="startPractice('mistake')">苦手復習</button>
+          <button class="btn-secondary" onclick="renderHistory()">学習履歴</button>
+        </div>
+      `;
+    }
+
+    function startPractice(mode, part) {
+      const questions = getQuestionsByMode(mode, part);
+      appState.mode = mode;
+      appState.currentQuestions = questions;
+      appState.currentIndex = 0;
+      appState.selectedChoiceIndex = null;
+      appState.answered = false;
+      appState.currentResult = null;
+      appState.sessionResults = [];
+
+      if (!questions.length) {
+        const root = document.getElementById('app-root');
+        const msg = mode === 'mistake' ? '復習対象はありません' : '対象問題がありません';
+        root.innerHTML = `<h2>${escapeHtml(mode === 'mistake' ? '苦手復習' : '演習')}</h2><div class="empty">${escapeHtml(msg)}</div><div class="actions"><button class="btn-secondary" onclick="renderHome()">ホームへ戻る</button></div>`;
+        return;
+      }
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const root = document.getElementById('app-root');
+      const q = appState.currentQuestions[appState.currentIndex];
+      if (!q) return renderResult();
+      const selected = appState.selectedChoiceIndex;
+
+      const choicesHtml = q.choices.map((c, i) => {
+        let cls = 'choice';
+        if (selected === i) cls += ' selected';
+        if (appState.answered) {
+          if (i === q.answer) cls += ' correct';
+          if (i === selected && i !== q.answer) cls += ' wrong';
+        }
+        const label = ['A', 'B', 'C', 'D'][i];
+        return `<button class="${cls}" ${appState.answered ? 'disabled' : ''} onclick="selectChoice(${i})">${label}. ${escapeHtml(c)}</button>`;
+      }).join('');
+
+      root.innerHTML = `
+        <h2>問題演習</h2>
+        <p><strong>${appState.currentIndex + 1}</strong> / ${appState.currentQuestions.length}</p>
+        <div class="meta">
+          <span class="badge">Part ${escapeHtml(q.part)}</span>
+          <span class="badge">難易度: ${escapeHtml(q.difficulty)}</span>
+          ${(q.tags || []).map((t) => `<span class="badge">${escapeHtml(t)}</span>`).join('')}
+        </div>
+        ${q.passage ? `<div class="passage">${escapeHtml(q.passage)}</div>` : ''}
+        <p>${escapeHtml(q.question)}</p>
+        <div class="choice-list">${choicesHtml}</div>
+        <p id="alert-box" class="small"></p>
+        <button id="submit-btn" onclick="submitAnswer()" ${appState.answered ? 'disabled' : ''}>回答する</button>
+        <div id="feedback" aria-live="polite">${appState.answered ? showExplanation() : ''}</div>
+        <div class="actions">
+          <button class="btn-secondary" onclick="goNextQuestion()" ${appState.answered ? '' : 'disabled'}>次の問題へ</button>
+          <button class="btn-secondary" onclick="renderHome()">ホームへ戻る</button>
+        </div>
+      `;
+    }
+
+    function selectChoice(index) {
+      if (appState.answered) return;
+      appState.selectedChoiceIndex = index;
+      renderQuestion();
+    }
+
+    function submitAnswer() {
+      if (appState.answered) return;
+      const q = appState.currentQuestions[appState.currentIndex];
+      if (!q) return;
+      if (appState.selectedChoiceIndex === null) {
+        const alertBox = document.getElementById('alert-box');
+        if (alertBox) alertBox.textContent = '選択肢を選んでから回答してください。';
+        return;
+      }
+      appState.answered = true;
+      const isCorrect = appState.selectedChoiceIndex === q.answer;
+      appState.currentResult = isCorrect;
+      appState.sessionResults.push({ question: q, selected: appState.selectedChoiceIndex, isCorrect });
+      saveAnswerResult(q, appState.selectedChoiceIndex, isCorrect);
+      renderQuestion();
+    }
+
+    function showExplanation() {
+      const q = appState.currentQuestions[appState.currentIndex];
+      if (!q || !appState.answered) return '';
+      const correctLabel = ['A', 'B', 'C', 'D'][q.answer];
+      const selectedLabel = ['A', 'B', 'C', 'D'][appState.selectedChoiceIndex];
+      const resultClass = appState.currentResult ? 'result-ok' : 'result-ng';
+      const resultText = appState.currentResult ? '正解です！' : '不正解です。';
+      return `
+        <div class="result-banner ${resultClass}">${resultText} あなたの回答: ${selectedLabel} / 正解: ${correctLabel}</div>
+        <div class="explanation"><strong>解説:</strong><br>${escapeHtml(q.explanation)}</div>
+      `;
+    }
+
+    function goNextQuestion() {
+      if (!appState.answered) return;
+      appState.currentIndex += 1;
+      appState.selectedChoiceIndex = null;
+      appState.answered = false;
+      appState.currentResult = null;
+      if (appState.currentIndex >= appState.currentQuestions.length) return renderResult();
+      renderQuestion();
+    }
+
+    function renderResult() {
+      const root = document.getElementById('app-root');
+      const total = appState.sessionResults.length;
+      const correct = appState.sessionResults.filter((r) => r.isCorrect).length;
+      const rate = total ? Math.round((correct / total) * 100) : 0;
+      const mistakes = appState.sessionResults.filter((r) => !r.isCorrect);
+      root.innerHTML = `
+        <h2>結果</h2>
+        <p>出題数: <strong>${total}</strong></p>
+        <p>正解数: <strong>${correct}</strong></p>
+        <p>正答率: <strong>${rate}%</strong></p>
+        <h3>間違えた問題一覧</h3>
+        ${mistakes.length ? `<ul>${mistakes.map((m) => `<li>${escapeHtml(m.question.id)} - ${escapeHtml(m.question.question)}</li>`).join('')}</ul>` : '<div class="empty">全問正解です！</div>'}
+        <div class="actions">
+          <button onclick="startPractice('${appState.mode}', ${appState.mode === 'part' ? appState.currentQuestions[0]?.part || 5 : 'undefined'})">もう一度解く</button>
+          <button class="btn-secondary" onclick="renderHome()">ホームへ戻る</button>
+        </div>
+      `;
+    }
+
+    function renderHistory() {
+      const root = document.getElementById('app-root');
+      const stats = calculateStats();
+      const recent = stats.history.slice(-10).reverse();
+      root.innerHTML = `
+        <h2>学習履歴</h2>
+        <p>総回答数: <strong>${stats.total}</strong></p>
+        <p>正解数: <strong>${stats.correct}</strong></p>
+        <p>正答率: <strong>${stats.rate}%</strong></p>
+        <h3>Part別正答率</h3>
+        <ul>
+          ${stats.partStats.map((s) => `<li>Part ${s.part}: ${s.correct}/${s.total} (${s.rate}%)</li>`).join('')}
+        </ul>
+        <p>間違えた問題数: <strong>${stats.mistakesCount}</strong></p>
+        <h3>直近10件の回答履歴</h3>
+        ${recent.length ? `<ul class="history-list">${recent.map((r) => `<li>${escapeHtml(new Date(r.answeredAt).toLocaleString('ja-JP'))} / ${escapeHtml(r.questionId)} / Part ${escapeHtml(r.part)} / ${r.isCorrect ? '正解' : '不正解'}</li>`).join('')}</ul>` : '<div class="empty">履歴はまだありません。</div>'}
+        <div class="actions">
+          <button class="btn-danger" onclick="resetHistory()">履歴リセット</button>
+          <button class="btn-secondary" onclick="renderHome()">ホームへ戻る</button>
+        </div>
+      `;
+    }
+
+    function resetHistory() {
+      saveHistory([]);
+      saveMistakes([]);
+      renderHistory();
+    }
+
+    function initApp() {
+      try {
+        renderHome();
+      } catch (e) {
+        const root = document.getElementById('app-root');
+        root.innerHTML = '<div class="empty">エラーが発生しました。ページを再読み込みしてください。</div>';
+      }
+    }
+
+    window.initApp = initApp;
+    window.renderHome = renderHome;
+    window.startPractice = startPractice;
+    window.getQuestionsByMode = getQuestionsByMode;
+    window.renderQuestion = renderQuestion;
+    window.selectChoice = selectChoice;
+    window.submitAnswer = submitAnswer;
+    window.showExplanation = showExplanation;
+    window.goNextQuestion = goNextQuestion;
+    window.renderResult = renderResult;
+    window.renderHistory = renderHistory;
+    window.saveAnswerResult = saveAnswerResult;
+    window.getHistory = getHistory;
+    window.saveHistory = saveHistory;
+    window.getMistakes = getMistakes;
+    window.saveMistakes = saveMistakes;
+    window.resetHistory = resetHistory;
+    window.shuffleArray = shuffleArray;
+    window.escapeHtml = escapeHtml;
+
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
