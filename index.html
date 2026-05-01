@@ -6,466 +6,184 @@
   <title>TOEIC形式 英語トレーナー</title>
   <style>
     :root {
-      --bg: #eef5ff;
+      --bg0: #f5f7ff;
+      --bg1: #eef2ff;
       --card: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --success-bg: #e8f8ef;
-      --success-text: #166534;
-      --danger-bg: #feefef;
-      --danger-text: #991b1b;
-      --border: #dbe4f0;
+      --txt: #0f172a;
+      --muted: #64748b;
+      --line: #dbe3ff;
+      --pri: #4f46e5;
+      --pri2: #2563eb;
+      --ok: #15803d;
+      --okbg: #ecfdf3;
+      --ng: #b91c1c;
+      --ngbg: #fef2f2;
+      --warn: #92400e;
+      --warnbg: #fff7ed;
     }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
-      color: var(--text);
-      background: linear-gradient(180deg, #f4f8ff 0%, #eaf1fb 100%);
-      line-height: 1.6;
-      font-size: 16px;
+      color: var(--txt);
+      font-family: "Segoe UI", "Yu Gothic", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.2), transparent 30%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      min-height: 100vh;
     }
-    .app { max-width: 900px; margin: 0 auto; padding: 16px; }
-    .header, .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.06);
-    }
-    .header { padding: 20px; margin-bottom: 16px; }
-    h1 { margin: 0 0 8px; font-size: 1.7rem; }
-    .subtitle { margin: 0 0 8px; color: #1e3a8a; font-weight: 600; }
-    .notice { margin: 0; font-size: 0.9rem; color: var(--muted); }
-    .card { padding: 18px; margin-bottom: 14px; }
+
+    .app { max-width: 1024px; margin: 0 auto; padding: 16px; }
+    .shell { background: rgba(255,255,255,.8); backdrop-filter: blur(8px); border-radius: 24px; box-shadow: 0 12px 34px rgba(23,37,84,.12); overflow: hidden; }
+    .header { background: linear-gradient(135deg, #1e3a8a, #4f46e5 60%, #2563eb); color: #fff; padding: 22px 20px; }
+    .content { padding: 14px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
     .grid { display: grid; gap: 10px; }
-    .mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .summary-item {
-      background: #f8fbff;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
-      text-align: center;
-    }
-    .summary-item strong { display: block; font-size: 1.2rem; color: #1e40af; }
-    button {
-      border: none;
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      background: var(--primary);
-      color: #fff;
-      transition: 0.2s;
-      width: 100%;
-    }
-    button:hover:not(:disabled), button:focus-visible:not(:disabled) { background: var(--primary-dark); }
-    button:disabled { opacity: 0.55; cursor: not-allowed; }
-    .btn-secondary { background: #64748b; }
-    .btn-secondary:hover:not(:disabled), .btn-secondary:focus-visible:not(:disabled) { background: #475569; }
-    .btn-danger { background: #dc2626; }
-    .btn-danger:hover:not(:disabled), .btn-danger:focus-visible:not(:disabled) { background: #b91c1c; }
-    .actions { display: flex; gap: 10px; margin-top: 12px; }
-    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-    .badge {
-      display: inline-block;
-      background: #e0ecff;
-      color: #1e3a8a;
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 0.85rem;
-      font-weight: 700;
-    }
-    .passage {
-      background: #f7fafc;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      white-space: pre-wrap;
-      margin-bottom: 12px;
-    }
-    .choice-list { display: grid; gap: 8px; margin-top: 10px; }
-    .choice {
-      text-align: left;
-      background: #fff;
-      border: 2px solid var(--border);
-      color: var(--text);
-      font-weight: 600;
-    }
-    .choice.selected { border-color: #2563eb; background: #eff6ff; }
-    .choice.correct { border-color: #16a34a; background: var(--success-bg); color: var(--success-text); }
-    .choice.wrong { border-color: #dc2626; background: var(--danger-bg); color: var(--danger-text); }
-    .result-banner { margin-top: 10px; padding: 10px; border-radius: 8px; font-weight: 700; }
-    .result-ok { background: var(--success-bg); color: var(--success-text); }
-    .result-ng { background: var(--danger-bg); color: var(--danger-text); }
-    .explanation {
-      margin-top: 10px;
-      border-left: 5px solid #3b82f6;
-      background: #eff6ff;
-      padding: 10px;
-      border-radius: 8px;
-    }
-    .small { color: var(--muted); font-size: 0.9rem; }
-    ul { padding-left: 18px; }
-    .empty { padding: 12px; border: 1px dashed #94a3b8; border-radius: 10px; color: #334155; background: #f8fafc; }
-    .history-list li { margin-bottom: 8px; }
-    @media (max-width: 640px) {
-      .app { padding: 10px; }
-      h1 { font-size: 1.35rem; }
-      .mode-grid, .summary-grid { grid-template-columns: 1fr; }
-      .actions { flex-direction: column; }
-      button { padding: 13px 12px; }
-    }
+    .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .sum { border: 1px solid var(--line); border-radius: 12px; padding: 8px; text-align: center; background: linear-gradient(180deg, #fff, #f8faff); }
+    .sum strong { display: block; font-size: 1.2rem; }
+    button { width: 100%; border: none; border-radius: 999px; padding: 12px 14px; font-weight: 700; cursor: pointer; }
+    .p { background: linear-gradient(135deg, var(--pri), var(--pri2)); color: #fff; }
+    .g { background: #edf2ff; color: #243b8a; }
+    .d { background: #ef4444; color: #fff; }
+    .badge { display: inline-block; border-radius: 999px; padding: 4px 10px; margin: 0 6px 6px 0; font-size: .8rem; font-weight: 700; }
+    .bp { background: #dbeafe; }
+    .bd { background: #ede9fe; }
+    .bt { background: #e0f2fe; }
+    .bar { height: 10px; background: #dbeafe; border-radius: 999px; overflow: hidden; }
+    .fill { height: 100%; background: linear-gradient(90deg, #2563eb, #4f46e5); }
+    .passage { white-space: pre-wrap; border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: #f8fbff; }
+    .choices { display: grid; gap: 8px; }
+    .choice { text-align: left; border: 2px solid var(--line); background: #fff; }
+    .choice.sel { border-color: #2563eb; background: #eff6ff; }
+    .choice.ok { border-color: var(--ok); background: var(--okbg); }
+    .choice.ng { border-color: var(--ng); background: var(--ngbg); }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .row > * { flex: 1 1 180px; }
+    .muted { color: var(--muted); font-size: .88rem; }
+    .msg { padding: 8px; border-radius: 8px; }
+    .okm { background: var(--okbg); color: var(--ok); }
+    .ngm { background: var(--ngbg); color: var(--ng); }
+    .warnm { background: var(--warnbg); color: var(--warn); }
+    .session-card { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: #fbfcff; margin-bottom: 8px; }
+    textarea { width: 100%; min-height: 280px; border-radius: 10px; border: 1px solid var(--line); padding: 10px; }
+    @media (max-width: 760px) { .g2,.g4{ grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <main class="app">
-    <header class="header">
-      <h1>TOEIC形式 英語トレーナー</h1>
-      <p class="subtitle">TOEIC形式のオリジナル模擬問題でスコアアップ</p>
-      <p class="notice">本アプリはTOEIC公式・公認アプリではありません。実際のTOEIC過去問・公式問題は収録していません。</p>
-    </header>
-    <section id="app-root" class="card" aria-live="polite"></section>
+    <section class="shell">
+      <header class="header">
+        <h1>TOEIC形式 英語トレーナー</h1>
+        <p>TOEIC形式のオリジナル模擬問題でスコアアップ</p>
+        <p>本アプリはTOEIC公式・公認アプリではありません。実際のTOEIC過去問・公式問題は収録していません。</p>
+      </header>
+      <div id="app" class="content"></div>
+    </section>
   </main>
+<script>
+const HISTORY_KEY = 'toeicStyleEnglishTrainerHistory';
+const MISTAKES_KEY = 'toeicStyleEnglishTrainerMistakes';
+const SETTINGS_KEY = 'toeicStyleEnglishTrainerSettings';
+const SESSIONS_KEY = 'toeicStyleEnglishTrainerSessions';
 
-  <script>
-    const HISTORY_KEY = 'toeicStyleEnglishTrainerHistory';
-    const MISTAKES_KEY = 'toeicStyleEnglishTrainerMistakes';
+const defaultSettings = { autoShowExplanation: true, autoNext: false, autoNextDelayMs: 900 };
 
-    const QUESTIONS = [
-      { id: 'P5-001', part: 5, category: 'grammar', difficulty: 'easy', tags: ['文法', '接続詞'], passage: '', question: 'The meeting was postponed _____ the manager was absent.', choices: ['because', 'although', 'despite', 'during'], answer: 0, explanation: 'the manager was absent は主語+動詞の節なので、節を導く接続詞が必要です。理由を表す because が最適です。' },
-      { id: 'P5-002', part: 5, category: 'vocabulary', difficulty: 'easy', tags: ['語彙', '業務連絡文'], passage: '', question: 'Please submit your expense report by Friday to avoid _____ in reimbursement.', choices: ['delay', 'delays', 'delayed', 'delaying'], answer: 1, explanation: 'avoid の後ろは名詞または動名詞。ここでは in reimbursement を修飾する複数名詞 delays（遅延）が自然です。' },
-      { id: 'P5-003', part: 5, category: 'preposition', difficulty: 'medium', tags: ['前置詞', '文法'], passage: '', question: 'All interns must check _____ with the HR desk before 9 a.m.', choices: ['at', 'in', 'to', 'for'], answer: 1, explanation: 'check in は「到着を報告する」という熟語です。前置詞 in が正解です。' },
-      { id: 'P5-004', part: 5, category: 'parts-of-speech', difficulty: 'medium', tags: ['品詞', '文法'], passage: '', question: 'The new software is highly _____ and easy for first-time users.', choices: ['intuitively', 'intuition', 'intuitive', 'intuitiveness'], answer: 2, explanation: 'be動詞の後ろで主語 software を説明する形容詞が必要です。intuitive が正しい品詞です。' },
-      { id: 'P5-005', part: 5, category: 'conjunction', difficulty: 'medium', tags: ['接続詞', '業務連絡文'], passage: '', question: 'You can either attend the workshop in person _____ join online.', choices: ['but', 'or', 'so', 'yet'], answer: 1, explanation: 'either A or B の構文です。or が必須になります。' },
-      { id: 'P5-006', part: 5, category: 'grammar', difficulty: 'easy', tags: ['文法', '時制'], passage: '', question: 'Ms. Green _____ the monthly report before the deadline yesterday.', choices: ['finish', 'finishes', 'finished', 'has finished'], answer: 2, explanation: 'yesterday があるため過去時制 finished が正解です。' },
-      { id: 'P5-007', part: 5, category: 'vocabulary', difficulty: 'hard', tags: ['語彙', '広告文'], passage: '', question: 'The advertisement aims to _____ younger customers to the brand.', choices: ['attract', 'attraction', 'attractive', 'attracted'], answer: 0, explanation: 'aim to の後ろは動詞原形。意味的にも「引きつける」attract が適切です。' },
-      { id: 'P5-008', part: 5, category: 'preposition', difficulty: 'medium', tags: ['前置詞', '業務連絡文'], passage: '', question: 'The final decision will depend _____ the client’s budget.', choices: ['of', 'to', 'on', 'with'], answer: 2, explanation: 'depend on はセットで覚える表現です。' },
-      { id: 'P5-009', part: 5, category: 'parts-of-speech', difficulty: 'hard', tags: ['品詞', 'メール文'], passage: '', question: 'We appreciate your _____ response to our inquiry.', choices: ['promptly', 'promptness', 'prompt', 'prompts'], answer: 2, explanation: 'response を修飾するので形容詞 prompt（迅速な）が必要です。' },
-      { id: 'P5-010', part: 5, category: 'grammar', difficulty: 'medium', tags: ['文法', '関係代名詞'], passage: '', question: 'The employee _____ solved the server issue will receive recognition.', choices: ['who', 'which', 'whom', 'whose'], answer: 0, explanation: '先行詞が人（employee）で、主語として節を導くため who が正解です。' },
-      { id: 'P6-001', part: 6, category: 'email', difficulty: 'medium', tags: ['メール文', '接続詞'], passage: 'Subject: Schedule Change\n\nHello Team,\n\nOur product demo has been moved to Thursday at 2:00 p.m. _____ several clients requested additional preparation time.\n\nPlease update your calendars and send any questions by Wednesday noon.\n\nBest regards,\nNina', question: '空欄に最も適切な語を選んでください。', choices: ['because', 'unless', 'while', 'however'], answer: 0, explanation: '後半は理由説明なので because が自然です。however は逆接で文構造が合いません。' },
-      { id: 'P6-002', part: 6, category: 'notice', difficulty: 'easy', tags: ['お知らせ文', '前置詞'], passage: 'Office Notice\n\nThe elevator inspection will take place _____ May 12 from 9:00 to 11:00 a.m.\n\nDuring this time, please use the stairs on the west side.', question: '空欄に最も適切な語を選んでください。', choices: ['in', 'on', 'at', 'for'], answer: 1, explanation: '日付の前には on を使います。' },
-      { id: 'P6-003', part: 6, category: 'business', difficulty: 'medium', tags: ['業務連絡文', '品詞'], passage: 'Internal Memo\n\nTo improve customer support, we are introducing a new ticket system. Training sessions will be held weekly, and attendance is _____ recommended for all staff members.', question: '空欄に最も適切な語を選んでください。', choices: ['strong', 'strongly', 'strength', 'stronger'], answer: 1, explanation: 'recommended（推奨される）を修飾する副詞 strongly が必要です。' },
-      { id: 'P6-004', part: 6, category: 'schedule', difficulty: 'hard', tags: ['スケジュール文', '語彙'], passage: 'Training Schedule Update\n\nThe morning session starts at 9:30, and the afternoon session begins at 1:30. Participants are asked to arrive 15 minutes early to complete registration _____.', question: '空欄に最も適切な語を選んでください。', choices: ['form', 'forms', 'formal', 'formation'], answer: 1, explanation: 'registration forms（登録用紙）が自然な名詞句です。複数形 forms が最適です。' },
-      { id: 'P6-005', part: 6, category: 'advertisement', difficulty: 'medium', tags: ['広告文', '文法'], passage: 'City Fitness Promotion\n\nJoin this month and get two personal training sessions for free. Members who sign up before April 30 _____ receive a complimentary nutrition guide.', question: '空欄に最も適切な語を選んでください。', choices: ['also', 'too', 'either', 'still'], answer: 0, explanation: '肯定文で「〜も」を動詞の前で表すには also が自然です。' },
-      { id: 'P7-001', part: 7, category: 'email', difficulty: 'medium', tags: ['メール文', '読解'], passage: 'From: Alex Park\nTo: Supply Team\n\nHi everyone,\n\nThe shipment for order #8842 arrived this morning, but three boxes were damaged. I have already contacted the courier company, and they will send a representative tomorrow to inspect the items.\n\nPlease do not discard any packaging until the inspection is complete. Also, send me photos of the damaged boxes by 4 p.m. today.\n\nThanks,\nAlex', question: 'Alex がチームに依頼していることはどれですか。', choices: ['破損箱をすぐ廃棄する', '本日16時までに写真を送る', '配送会社へ再連絡する', '注文番号を変更する'], answer: 1, explanation: '本文に send me photos ... by 4 p.m. today とあるため、写真送付が依頼内容です。' },
-      { id: 'P7-002', part: 7, category: 'notice', difficulty: 'easy', tags: ['お知らせ文', '読解'], passage: 'Library Notice\n\nStarting next Monday, the third-floor study area will be reserved for group projects from 3:00 p.m. to 7:00 p.m. on weekdays. Individual study desks on the second floor remain open during normal hours.\n\nThank you for your cooperation.', question: '平日15時〜19時にグループ学習ができる場所はどこですか。', choices: ['1階ロビー', '2階個人席', '3階学習エリア', '屋外テラス'], answer: 2, explanation: 'お知らせ文で third-floor study area がその時間帯にグループ用と明記されています。' },
-      { id: 'P7-003', part: 7, category: 'advertisement', difficulty: 'medium', tags: ['広告文', '読解'], passage: 'Weekend Career Seminar\n\nLooking to improve your interview skills? Join our one-day seminar on Saturday, June 8.\n- Morning: Resume workshop\n- Afternoon: Mock interviews with HR professionals\n\nEarly registration (by May 20) includes a free feedback session next week.', question: '無料のフィードバックセッションを受ける条件はどれですか。', choices: ['6月8日に参加する', '履歴書を事前提出する', '5月20日までに早期登録する', '午後の面接練習のみ受講する'], answer: 2, explanation: 'Early registration (by May 20) includes ... とあるため、5月20日までの登録が条件です。' },
-      { id: 'P7-004', part: 7, category: 'schedule', difficulty: 'hard', tags: ['スケジュール文', '読解'], passage: 'Project Timeline\n\nMay 3: Initial draft due\nMay 6: Team review meeting\nMay 10: Client presentation rehearsal\nMay 12: Final presentation\n\nNote: Slides must be shared with the design team at least two days before the final presentation.', question: 'スライド共有の締切日はいつですか。', choices: ['5月6日', '5月8日', '5月10日', '5月12日'], answer: 2, explanation: '最終発表は5月12日で、2日前までに共有するので5月10日が締切です。' },
-      { id: 'P7-005', part: 7, category: 'business', difficulty: 'medium', tags: ['業務連絡文', '読解'], passage: 'Team Message\n\nDue to system maintenance, the customer database will be unavailable from 8:00 p.m. to 10:00 p.m. tonight. Please complete urgent updates before 7:45 p.m. If you need to access records during maintenance, contact IT support in advance.', question: 'メッセージの主な目的は何ですか。', choices: ['新しい顧客管理ソフトを紹介する', 'メンテナンス時間と事前対応を知らせる', 'ITサポートの連絡先を変更する', '夜間勤務の申請方法を説明する'], answer: 1, explanation: '本文はメンテナンス時間と、その前に更新を済ませる注意を伝える内容です。' }
-    ];
+function escapeHtml(text) {
+  return String(text ?? '').replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
+}
 
-    const appState = {
-      mode: 'home',
-      currentQuestions: [],
-      currentIndex: 0,
-      selectedChoiceIndex: null,
-      answered: false,
-      currentResult: null,
-      sessionResults: []
-    };
-
-    function escapeHtml(text) {
-      return String(text ?? '').replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
-    }
-
-    function shuffleArray(array) {
-      const cloned = Array.isArray(array) ? [...array] : [];
-      for (let i = cloned.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [cloned[i], cloned[j]] = [cloned[j], cloned[i]];
-      }
-      return cloned;
-    }
-
-    function getHistory() {
-      try {
-        const raw = localStorage.getItem(HISTORY_KEY);
-        const parsed = raw ? JSON.parse(raw) : [];
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (_) {
-        return [];
-      }
-    }
-
-    function saveHistory(history) {
-      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(Array.isArray(history) ? history : [])); } catch (_) {}
-    }
-
-    function getMistakes() {
-      try {
-        const raw = localStorage.getItem(MISTAKES_KEY);
-        const parsed = raw ? JSON.parse(raw) : [];
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (_) {
-        return [];
-      }
-    }
-
-    function saveMistakes(mistakes) {
-      try {
-        const unique = [...new Set((Array.isArray(mistakes) ? mistakes : []).map(String))];
-        localStorage.setItem(MISTAKES_KEY, JSON.stringify(unique));
-      } catch (_) {}
-    }
-
-    function saveAnswerResult(question, selectedIndex, isCorrect) {
-      if (!question || typeof question.id !== 'string') return;
-      const history = getHistory();
-      history.push({
-        questionId: question.id,
-        part: question.part,
-        selectedIndex,
-        correctIndex: question.answer,
-        isCorrect,
-        answeredAt: new Date().toISOString(),
-        tags: Array.isArray(question.tags) ? question.tags : []
-      });
-      saveHistory(history);
-
-      const mistakes = new Set(getMistakes());
-      if (isCorrect) mistakes.delete(question.id);
-      else mistakes.add(question.id);
-      saveMistakes([...mistakes]);
-    }
-
-    function calculateStats() {
-      const history = getHistory();
-      const total = history.length;
-      const correct = history.filter((h) => h && h.isCorrect).length;
-      const rate = total ? Math.round((correct / total) * 100) : 0;
-      const mistakesCount = getMistakes().length;
-      const partStats = [5, 6, 7].map((part) => {
-        const records = history.filter((h) => h && h.part === part);
-        const c = records.filter((h) => h.isCorrect).length;
-        return { part, total: records.length, correct: c, rate: records.length ? Math.round((c / records.length) * 100) : 0 };
-      });
-      return { total, correct, rate, mistakesCount, partStats, history };
-    }
-
-    function getQuestionsByMode(mode, part) {
-      const valid = QUESTIONS.filter((q) => q && typeof q.id === 'string' && Array.isArray(q.choices) && q.choices.length === 4 && typeof q.answer === 'number');
-      if (mode === 'part') return valid.filter((q) => q.part === part);
-      if (mode === 'random') return shuffleArray(valid);
-      if (mode === 'mistake') {
-        const set = new Set(getMistakes());
-        return valid.filter((q) => set.has(q.id));
-      }
-      return [];
-    }
-
-    function renderHome() {
-      appState.mode = 'home';
-      const root = document.getElementById('app-root');
-      const stats = calculateStats();
-      root.innerHTML = `
-        <h2>ホーム</h2>
-        <p class="small">モードを選んで学習を開始してください。</p>
-        <div class="card" style="margin: 8px 0 14px;">
-          <h3>学習サマリー</h3>
-          <div class="grid summary-grid">
-            <div class="summary-item"><span>総回答数</span><strong>${stats.total}</strong></div>
-            <div class="summary-item"><span>正解数</span><strong>${stats.correct}</strong></div>
-            <div class="summary-item"><span>正答率</span><strong>${stats.rate}%</strong></div>
-            <div class="summary-item"><span>間違えた問題数</span><strong>${stats.mistakesCount}</strong></div>
-          </div>
-        </div>
-        <div class="grid mode-grid">
-          <button onclick="startPractice('part', 5)">Part 5演習</button>
-          <button onclick="startPractice('part', 6)">Part 6演習</button>
-          <button onclick="startPractice('part', 7)">Part 7演習</button>
-          <button onclick="startPractice('random')">ランダム演習</button>
-          <button onclick="startPractice('mistake')">苦手復習</button>
-          <button class="btn-secondary" onclick="renderHistory()">学習履歴</button>
-        </div>
-      `;
-    }
-
-    function startPractice(mode, part) {
-      const questions = getQuestionsByMode(mode, part);
-      appState.mode = mode;
-      appState.currentQuestions = questions;
-      appState.currentIndex = 0;
-      appState.selectedChoiceIndex = null;
-      appState.answered = false;
-      appState.currentResult = null;
-      appState.sessionResults = [];
-
-      if (!questions.length) {
-        const root = document.getElementById('app-root');
-        const msg = mode === 'mistake' ? '復習対象はありません' : '対象問題がありません';
-        root.innerHTML = `<h2>${escapeHtml(mode === 'mistake' ? '苦手復習' : '演習')}</h2><div class="empty">${escapeHtml(msg)}</div><div class="actions"><button class="btn-secondary" onclick="renderHome()">ホームへ戻る</button></div>`;
-        return;
-      }
-      renderQuestion();
-    }
-
-    function renderQuestion() {
-      const root = document.getElementById('app-root');
-      const q = appState.currentQuestions[appState.currentIndex];
-      if (!q) return renderResult();
-      const selected = appState.selectedChoiceIndex;
-
-      const choicesHtml = q.choices.map((c, i) => {
-        let cls = 'choice';
-        if (selected === i) cls += ' selected';
-        if (appState.answered) {
-          if (i === q.answer) cls += ' correct';
-          if (i === selected && i !== q.answer) cls += ' wrong';
-        }
-        const label = ['A', 'B', 'C', 'D'][i];
-        return `<button class="${cls}" ${appState.answered ? 'disabled' : ''} onclick="selectChoice(${i})">${label}. ${escapeHtml(c)}</button>`;
-      }).join('');
-
-      root.innerHTML = `
-        <h2>問題演習</h2>
-        <p><strong>${appState.currentIndex + 1}</strong> / ${appState.currentQuestions.length}</p>
-        <div class="meta">
-          <span class="badge">Part ${escapeHtml(q.part)}</span>
-          <span class="badge">難易度: ${escapeHtml(q.difficulty)}</span>
-          ${(q.tags || []).map((t) => `<span class="badge">${escapeHtml(t)}</span>`).join('')}
-        </div>
-        ${q.passage ? `<div class="passage">${escapeHtml(q.passage)}</div>` : ''}
-        <p>${escapeHtml(q.question)}</p>
-        <div class="choice-list">${choicesHtml}</div>
-        <p id="alert-box" class="small"></p>
-        <button id="submit-btn" onclick="submitAnswer()" ${appState.answered ? 'disabled' : ''}>回答する</button>
-        <div id="feedback" aria-live="polite">${appState.answered ? showExplanation() : ''}</div>
-        <div class="actions">
-          <button class="btn-secondary" onclick="goNextQuestion()" ${appState.answered ? '' : 'disabled'}>次の問題へ</button>
-          <button class="btn-secondary" onclick="renderHome()">ホームへ戻る</button>
-        </div>
-      `;
-    }
-
-    function selectChoice(index) {
-      if (appState.answered) return;
-      appState.selectedChoiceIndex = index;
-      renderQuestion();
-    }
-
-    function submitAnswer() {
-      if (appState.answered) return;
-      const q = appState.currentQuestions[appState.currentIndex];
-      if (!q) return;
-      if (appState.selectedChoiceIndex === null) {
-        const alertBox = document.getElementById('alert-box');
-        if (alertBox) alertBox.textContent = '選択肢を選んでから回答してください。';
-        return;
-      }
-      appState.answered = true;
-      const isCorrect = appState.selectedChoiceIndex === q.answer;
-      appState.currentResult = isCorrect;
-      appState.sessionResults.push({ question: q, selected: appState.selectedChoiceIndex, isCorrect });
-      saveAnswerResult(q, appState.selectedChoiceIndex, isCorrect);
-      renderQuestion();
-    }
-
-    function showExplanation() {
-      const q = appState.currentQuestions[appState.currentIndex];
-      if (!q || !appState.answered) return '';
-      const correctLabel = ['A', 'B', 'C', 'D'][q.answer];
-      const selectedLabel = ['A', 'B', 'C', 'D'][appState.selectedChoiceIndex];
-      const resultClass = appState.currentResult ? 'result-ok' : 'result-ng';
-      const resultText = appState.currentResult ? '正解です！' : '不正解です。';
-      return `
-        <div class="result-banner ${resultClass}">${resultText} あなたの回答: ${selectedLabel} / 正解: ${correctLabel}</div>
-        <div class="explanation"><strong>解説:</strong><br>${escapeHtml(q.explanation)}</div>
-      `;
-    }
-
-    function goNextQuestion() {
-      if (!appState.answered) return;
-      appState.currentIndex += 1;
-      appState.selectedChoiceIndex = null;
-      appState.answered = false;
-      appState.currentResult = null;
-      if (appState.currentIndex >= appState.currentQuestions.length) return renderResult();
-      renderQuestion();
-    }
-
-    function renderResult() {
-      const root = document.getElementById('app-root');
-      const total = appState.sessionResults.length;
-      const correct = appState.sessionResults.filter((r) => r.isCorrect).length;
-      const rate = total ? Math.round((correct / total) * 100) : 0;
-      const mistakes = appState.sessionResults.filter((r) => !r.isCorrect);
-      root.innerHTML = `
-        <h2>結果</h2>
-        <p>出題数: <strong>${total}</strong></p>
-        <p>正解数: <strong>${correct}</strong></p>
-        <p>正答率: <strong>${rate}%</strong></p>
-        <h3>間違えた問題一覧</h3>
-        ${mistakes.length ? `<ul>${mistakes.map((m) => `<li>${escapeHtml(m.question.id)} - ${escapeHtml(m.question.question)}</li>`).join('')}</ul>` : '<div class="empty">全問正解です！</div>'}
-        <div class="actions">
-          <button onclick="startPractice('${appState.mode}', ${appState.mode === 'part' ? appState.currentQuestions[0]?.part || 5 : 'undefined'})">もう一度解く</button>
-          <button class="btn-secondary" onclick="renderHome()">ホームへ戻る</button>
-        </div>
-      `;
-    }
-
-    function renderHistory() {
-      const root = document.getElementById('app-root');
-      const stats = calculateStats();
-      const recent = stats.history.slice(-10).reverse();
-      root.innerHTML = `
-        <h2>学習履歴</h2>
-        <p>総回答数: <strong>${stats.total}</strong></p>
-        <p>正解数: <strong>${stats.correct}</strong></p>
-        <p>正答率: <strong>${stats.rate}%</strong></p>
-        <h3>Part別正答率</h3>
-        <ul>
-          ${stats.partStats.map((s) => `<li>Part ${s.part}: ${s.correct}/${s.total} (${s.rate}%)</li>`).join('')}
-        </ul>
-        <p>間違えた問題数: <strong>${stats.mistakesCount}</strong></p>
-        <h3>直近10件の回答履歴</h3>
-        ${recent.length ? `<ul class="history-list">${recent.map((r) => `<li>${escapeHtml(new Date(r.answeredAt).toLocaleString('ja-JP'))} / ${escapeHtml(r.questionId)} / Part ${escapeHtml(r.part)} / ${r.isCorrect ? '正解' : '不正解'}</li>`).join('')}</ul>` : '<div class="empty">履歴はまだありません。</div>'}
-        <div class="actions">
-          <button class="btn-danger" onclick="resetHistory()">履歴リセット</button>
-          <button class="btn-secondary" onclick="renderHome()">ホームへ戻る</button>
-        </div>
-      `;
-    }
-
-    function resetHistory() {
-      saveHistory([]);
-      saveMistakes([]);
-      renderHistory();
-    }
-
-    function initApp() {
-      try {
-        renderHome();
-      } catch (e) {
-        const root = document.getElementById('app-root');
-        root.innerHTML = '<div class="empty">エラーが発生しました。ページを再読み込みしてください。</div>';
-      }
-    }
-
-    window.initApp = initApp;
-    window.renderHome = renderHome;
-    window.startPractice = startPractice;
-    window.getQuestionsByMode = getQuestionsByMode;
-    window.renderQuestion = renderQuestion;
-    window.selectChoice = selectChoice;
-    window.submitAnswer = submitAnswer;
-    window.showExplanation = showExplanation;
-    window.goNextQuestion = goNextQuestion;
-    window.renderResult = renderResult;
-    window.renderHistory = renderHistory;
-    window.saveAnswerResult = saveAnswerResult;
-    window.getHistory = getHistory;
-    window.saveHistory = saveHistory;
-    window.getMistakes = getMistakes;
-    window.saveMistakes = saveMistakes;
-    window.resetHistory = resetHistory;
-    window.shuffleArray = shuffleArray;
-    window.escapeHtml = escapeHtml;
-
-    document.addEventListener('DOMContentLoaded', initApp);
-  </script>
+const QUESTION_DATA = [
+  { id:'P5-001',part:5,difficulty:'easy',tags:['文法','接続詞'],passage:'',question:'The meeting was postponed _____ the manager was absent.',choices:['because','although','despite','during'],answer:0,explanation:'the manager was absent は主語+動詞の節なので、節を導く接続詞が必要です。理由を表す because が最適です。' },
+  { id:'P5-002',part:5,difficulty:'easy',tags:['語彙','業務連絡文'],passage:'',question:'Please submit your expense report by Friday to avoid _____ in reimbursement.',choices:['delay','delays','delayed','delaying'],answer:1,explanation:'avoid の後ろは名詞または動名詞。ここでは in reimbursement を修飾する複数名詞 delays（遅延）が自然です。' },
+  { id:'P5-003',part:5,difficulty:'medium',tags:['前置詞','文法'],passage:'',question:'All interns must check _____ with the HR desk before 9 a.m.',choices:['at','in','to','for'],answer:1,explanation:'check in は「到着を報告する」という熟語です。前置詞 in が正解です。' },
+  { id:'P5-004',part:5,difficulty:'medium',tags:['品詞','文法'],passage:'',question:'The new software is highly _____ and easy for first-time users.',choices:['intuitively','intuition','intuitive','intuitiveness'],answer:2,explanation:'be動詞の後ろで主語 software を説明する形容詞が必要です。intuitive が正しい品詞です。' },
+  { id:'P5-005',part:5,difficulty:'medium',tags:['接続詞','業務連絡文'],passage:'',question:'You can either attend the workshop in person _____ join online.',choices:['but','or','so','yet'],answer:1,explanation:'either A or B の構文です。or が必須になります。' },
+  { id:'P5-006',part:5,difficulty:'easy',tags:['文法','時制'],passage:'',question:'Ms. Green _____ the monthly report before the deadline yesterday.',choices:['finish','finishes','finished','has finished'],answer:2,explanation:'yesterday があるため過去時制 finished が正解です。' },
+  { id:'P5-007',part:5,difficulty:'hard',tags:['語彙','広告文'],passage:'',question:'The advertisement aims to _____ younger customers to the brand.',choices:['attract','attraction','attractive','attracted'],answer:0,explanation:'aim to の後ろは動詞原形。意味的にも「引きつける」attract が適切です。' },
+  { id:'P5-008',part:5,difficulty:'medium',tags:['前置詞','業務連絡文'],passage:'',question:'The final decision will depend _____ the client’s budget.',choices:['of','to','on','with'],answer:2,explanation:'depend on はセットで覚える表現です。' },
+  { id:'P5-009',part:5,difficulty:'hard',tags:['品詞','メール文'],passage:'',question:'We appreciate your _____ response to our inquiry.',choices:['promptly','promptness','prompt','prompts'],answer:2,explanation:'response を修飾するので形容詞 prompt（迅速な）が必要です。' },
+  { id:'P5-010',part:5,difficulty:'medium',tags:['文法','関係代名詞'],passage:'',question:'The employee _____ solved the server issue will receive recognition.',choices:['who','which','whom','whose'],answer:0,explanation:'先行詞が人（employee）で、主語として節を導くため who が正解です。' },
+  { id:'P6-001',part:6,difficulty:'medium',tags:['メール文','接続詞'],passage:'Subject: Demo Schedule Update\n\nHello Team,\n\nOur product demo has been moved to Thursday at 2:00 p.m. _____ several clients requested additional preparation time.\n\nPlease update your calendars and send any concerns by Wednesday noon.\n\nBest regards,\nNina',question:'空欄に最も適切な語を選んでください。',choices:['because','unless','while','however'],answer:0,explanation:'理由を導く because が自然です。' },
+  { id:'P6-002',part:6,difficulty:'easy',tags:['お知らせ文','前置詞'],passage:'Office Notice\n\nThe elevator inspection will take place _____ May 12 from 9:00 to 11:00 a.m.\n\nDuring this time, please use the west-side stairs. We appreciate your cooperation.',question:'空欄に最も適切な語を選んでください。',choices:['in','on','at','for'],answer:1,explanation:'日付の前は on。' },
+  { id:'P6-003',part:6,difficulty:'medium',tags:['社内連絡文','品詞'],passage:'Internal Memo\n\nTo improve response time, we are introducing a new ticket system next month.\n\nTraining sessions will be held weekly, and attendance is _____ recommended for all support staff.',question:'空欄に最も適切な語を選んでください。',choices:['strong','strongly','strength','stronger'],answer:1,explanation:'recommended を修飾する副詞 strongly。' },
+  { id:'P6-004',part:6,difficulty:'hard',tags:['スケジュール文','語彙'],passage:'Training Schedule Update\n\nThe morning session starts at 9:30, and the afternoon session starts at 1:30.\n\nParticipants are asked to arrive 15 minutes early to complete registration _____.',question:'空欄に最も適切な語を選んでください。',choices:['form','forms','formal','formation'],answer:1,explanation:'registration forms が自然な名詞句です。' },
+  { id:'P6-005',part:6,difficulty:'medium',tags:['広告文','文法'],passage:'City Fitness Promotion\n\nJoin this month and get two personal training sessions for free.\n\nMembers who sign up before April 30 _____ receive a complimentary nutrition guide.',question:'空欄に最も適切な語を選んでください。',choices:['also','too','either','still'],answer:0,explanation:'肯定文で動詞の前は also。' },
+  { id:'P7-001',part:7,difficulty:'medium',tags:['メール文','読解'],passage:'From: Alex Park\nTo: Supply Team\n\nThe shipment for order #8842 arrived this morning, but three boxes were damaged.\nI contacted the courier, and a representative will inspect the items tomorrow.\n\nPlease do not discard any packaging until inspection is complete.\nAlso, send me photos of the damaged boxes by 4 p.m. today.',question:'Alex がチームに依頼していることはどれですか。',choices:['破損箱をすぐ廃棄する','本日16時までに写真を送る','配送会社へ再連絡する','注文番号を変更する'],answer:1,explanation:'本文に写真送付依頼があります。' },
+  { id:'P7-002',part:7,difficulty:'easy',tags:['お知らせ文','読解'],passage:'Library Notice\n\nStarting next Monday, the third-floor study area will be reserved for group projects from 3:00 p.m. to 7:00 p.m. on weekdays.\n\nIndividual study desks on the second floor remain open during normal hours.',question:'平日15時〜19時にグループ学習ができる場所はどこですか。',choices:['1階ロビー','2階個人席','3階学習エリア','屋外テラス'],answer:2,explanation:'third-floor study area が該当します。' },
+  { id:'P7-003',part:7,difficulty:'medium',tags:['広告文','読解'],passage:'Weekend Career Seminar\n\nLooking to improve interview skills? Join our one-day seminar on Saturday, June 8.\n- Morning: Resume workshop\n- Afternoon: Mock interviews\n\nEarly registration (by May 20) includes a free feedback session next week.',question:'無料のフィードバックセッションを受ける条件はどれですか。',choices:['6月8日に参加する','履歴書を事前提出する','5月20日までに早期登録する','午後のみ受講する'],answer:2,explanation:'Early registration by May 20 が条件です。' },
+  { id:'P7-004',part:7,difficulty:'hard',tags:['スケジュール文','読解'],passage:'Project Timeline\n\nMay 3: Initial draft due\nMay 6: Team review meeting\nMay 10: Client presentation rehearsal\nMay 12: Final presentation\n\nNote: Slides must be shared with the design team at least two days before the final presentation.',question:'スライド共有の締切日はいつですか。',choices:['5月6日','5月8日','5月10日','5月12日'],answer:2,explanation:'5月12日の2日前で5月10日。' },
+  { id:'P7-005',part:7,difficulty:'medium',tags:['業務連絡文','読解'],passage:'Team Message\n\nDue to system maintenance, the customer database will be unavailable from 8:00 p.m. to 10:00 p.m. tonight.\n\nPlease complete urgent updates before 7:45 p.m. If you need records during maintenance, contact IT support in advance.',question:'メッセージの主な目的は何ですか。',choices:['新しいソフト紹介','メンテ時間と事前対応の共有','連絡先変更','申請方法説明'],answer:1,explanation:'メンテ時間と事前対応を知らせる内容です。' }
+];
+const qMap = Object.fromEntries(QUESTION_DATA.map((q) => [q.id, q]));
+const state = { screen:'home', questions:[], i:0, selected:null, answered:false, result:false, showExplanation:true, settings:null, session:null, sessionResults:[], timer:null, emptyTitle:'', emptyBody:'', aiMessage:'', quizMessage:'', aiPromptText:'' };
+function safeParse(k,d){try{const r=localStorage.getItem(k); if(!r)return d; return JSON.parse(r);}catch{return d;}}
+function safeSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(_){}}
+function normalizeHistory(rows){if(!Array.isArray(rows))return[]; return rows.map((r)=>{const q=qMap[r&&r.questionId]||null; return {questionId:String((r&&r.questionId)||'unknown'),part:(r&&typeof r.part==='number')?r.part:(q?q.part:null),selectedIndex:(r&&Number.isInteger(r.selectedIndex))?r.selectedIndex:null,correctIndex:(r&&Number.isInteger(r.correctIndex))?r.correctIndex:null,isCorrect:Boolean(r&&r.isCorrect),answeredAt:(r&&r.answeredAt)?String(r.answeredAt):new Date().toISOString(),difficulty:(r&&r.difficulty)||((q&&q.difficulty)||'unknown'),tags:Array.isArray(r&&r.tags)?r.tags:((q&&q.tags)||[]),mode:(r&&r.mode)?String(r.mode):'unknown'};});}
+function normalizeSessions(rows){if(!Array.isArray(rows))return[];return rows.map((s)=>{const total=Number(s&&s.totalQuestions)||0,ans=Number(s&&s.answeredCount)||0,cor=Number(s&&s.correctCount)||0;return{sessionId:String((s&&s.sessionId)||('s_'+Date.now())),mode:String((s&&s.mode)||'unknown'),part:('part' in (s||{}))?s.part:null,startedAt:String((s&&s.startedAt)||new Date().toISOString()),endedAt:s&&s.endedAt?String(s.endedAt):null,status:String((s&&s.status)||'in_progress'),totalQuestions:total,answeredCount:ans,correctCount:cor,wrongCount:Number(s&&s.wrongCount)||Math.max(0,ans-cor),unansweredCount:Math.max(0,total-ans),accuracy:ans?Math.round(cor/ans*100):0,questionIds:Array.isArray(s&&s.questionIds)?s.questionIds:[],answeredQuestionIds:Array.isArray(s&&s.answeredQuestionIds)?s.answeredQuestionIds:[],unfinishedQuestionIds:Array.isArray(s&&s.unfinishedQuestionIds)?s.unfinishedQuestionIds:[],durationSeconds:Number(s&&s.durationSeconds)||0,resultRecords:Array.isArray(s&&s.resultRecords)?s.resultRecords:[]};});}
+function getHistory(){return normalizeHistory(safeParse(HISTORY_KEY,[]));}
+function saveHistory(r){safeSet(HISTORY_KEY,normalizeHistory(r));}
+function getMistakes(){const m=safeParse(MISTAKES_KEY,[]);return Array.isArray(m)?[...new Set(m.map(String))]:[];}
+function saveMistakes(r){safeSet(MISTAKES_KEY,[...new Set((Array.isArray(r)?r:[]).map(String))]);}
+function getSessions(){return normalizeSessions(safeParse(SESSIONS_KEY,[]));}
+function saveSessions(r){safeSet(SESSIONS_KEY,normalizeSessions(r));}
+function getSettings(){const s=safeParse(SETTINGS_KEY,{});return(s&&typeof s==='object'&&!Array.isArray(s))?{...defaultSettings,...s}:{...defaultSettings};}
+function saveSettings(s){safeSet(SETTINGS_KEY,{...defaultSettings,...s});}
+function closeStaleSessions(){const s=getSessions();let ch=false;const now=new Date().toISOString();s.forEach((x)=>{if(x.status==='in_progress'){x.status='abandoned';if(!x.endedAt)x.endedAt=now;const st=Date.parse(x.startedAt)||Date.now();const en=Date.parse(x.endedAt)||Date.now();x.durationSeconds=Math.max(0,Math.round((en-st)/1000));x.unansweredCount=Math.max(0,x.totalQuestions-x.answeredCount);x.accuracy=x.answeredCount?Math.round(x.correctCount/x.answeredCount*100):0;ch=true;}});if(ch)saveSessions(s);}
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function getByMode(mode){if(mode==='all'||mode==='random')return shuffle(QUESTION_DATA);if(mode==='mistake'){const set=new Set(getMistakes());return QUESTION_DATA.filter((q)=>set.has(q.id));}if(mode.startsWith('part'))return QUESTION_DATA.filter((q)=>q.part===Number(mode.slice(4)));return[];}
+function calculateOverallStats(){const h=getHistory();const c=h.filter((x)=>x.isCorrect).length;return{total:h.length,correct:c,rate:h.length?Math.round(c/h.length*100):0,mistakes:getMistakes().length};}
+function calculatePartStats(){const h=getHistory();return[5,6,7].map((p)=>{const r=h.filter((x)=>x.part===p);const c=r.filter((x)=>x.isCorrect).length;return{part:p,total:r.length,correct:c,rate:r.length?Math.round(c/r.length*100):0};});}
+function calculateTagStats(){const m={};getHistory().forEach((r)=>(r.tags||[]).forEach((t)=>{m[t]=m[t]||{tag:t,total:0,correct:0};m[t].total++;if(r.isCorrect)m[t].correct++;}));return Object.values(m).map((x)=>({...x,rate:x.total?Math.round(x.correct/x.total*100):0})).sort((a,b)=>a.rate-b.rate);}
+function calculateDifficultyStats(){return['easy','medium','hard','unknown'].map((d)=>{const r=getHistory().filter((x)=>x.difficulty===d);const c=r.filter((x)=>x.isCorrect).length;return{difficulty:d,total:r.length,correct:c,rate:r.length?Math.round(c/r.length*100):0};});}
+function calculateSessionStats(){const s=getSessions();const sec=s.reduce((a,b)=>a+(b.durationSeconds||0),0);return{completed:s.filter((x)=>x.status==='completed'),abandoned:s.filter((x)=>x.status==='abandoned'),recent:s.slice(0,10),totalSec:sec,avgSec:s.length?Math.round(sec/s.length):0};}
+function getUnfinishedQuestionsFromSessions(){const out=[];getSessions().filter((s)=>s.status==='abandoned').forEach((s)=>(s.unfinishedQuestionIds||[]).forEach((id)=>out.push({sessionId:s.sessionId,questionId:id})));return out;}
+function getStatsForAi(){return{overall:calculateOverallStats(),parts:calculatePartStats(),tags:calculateTagStats(),diffs:calculateDifficultyStats(),sessions:calculateSessionStats(),history:getHistory(),mistakes:getMistakes(),unfinished:getUnfinishedQuestionsFromSessions()};}
+function isTodayLocal(iso){const d=new Date(iso);const n=new Date();return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();}
+function calculateTodaySummary(){const h=getHistory().filter((x)=>isTodayLocal(x.answeredAt));const s=getSessions().filter((x)=>isTodayLocal(x.startedAt));const c=h.filter((x)=>x.isCorrect).length;return{answers:h.length,correct:c,rate:h.length?Math.round(c/h.length*100):0,timeSec:s.reduce((a,b)=>a+(b.durationSeconds||0),0)};}
+function getRecommendedAction(){const ov=calculateOverallStats();const p5=calculatePartStats().find((x)=>x.part===5);const ss=calculateSessionStats();if(ov.total===0)return'まずは「全部モード」で実力チェックしてみましょう。';if(ov.mistakes>0)return'苦手問題が残っています。まずは「苦手復習」がおすすめです。';if(p5&&p5.total>=3&&p5.rate<70)return'Part 5の文法・語彙問題を重点的に練習しましょう。';if(ss.abandoned.length>ss.completed.length)return'途中終了が多めです。短めのPart別演習から始めましょう。';if(ov.rate>=80)return'良いペースです。全部モードで総合力を確認しましょう。';return'ランダム演習で弱点の偏りをチェックしましょう。';}
+function buildAiPrompt(o){const st=getStatsForAi();const lines=['あなたはTOEIC学習コーチです。','以下は私の「TOEIC形式 英語トレーナー」の学習データです。','','目的：','TOEIC L&RのReadingスコアを上げたいです。','Part 5 / Part 6 / Part 7 の弱点を分析し、次に何を優先して勉強すべきか教えてください。','','分析してほしいこと：','1. 全体の傾向','2. Part別の弱点','3. タグ別の弱点','4. 間違いが多い問題タイプ','5. 途中でやめてしまう傾向','6. 復習すべき優先順位','7. 明日からの具体的な学習メニュー','8. 1週間の学習計画','9. 正答率を上げるためのアドバイス','','学習データ：'];
+if(o.summary)lines.push(`- 全体サマリー: 回答${st.overall.total} 正解${st.overall.correct} 正答率${st.overall.rate}%`);
+if(o.part)st.parts.forEach((p)=>lines.push(`- Part${p.part}: ${p.correct}/${p.total} (${p.rate}%)`));
+if(o.tags)st.tags.forEach((t)=>lines.push(`- タグ ${t.tag}: ${t.correct}/${t.total} (${t.rate}%)`));
+if(o.diff)st.diffs.forEach((d)=>lines.push(`- 難易度 ${d.difficulty}: ${d.correct}/${d.total} (${d.rate}%)`));
+if(o.wrong)getHistory().filter((x)=>!x.isCorrect).slice(-50).forEach((x)=>lines.push(`- 間違い: ${x.questionId}`));
+if(o.recent10)getHistory().slice(-10).forEach((x)=>lines.push(`- 履歴10: ${x.answeredAt} ${x.questionId} ${x.isCorrect?'○':'×'}`));
+if(o.recent50)getHistory().slice(-50).forEach((x)=>lines.push(`- 履歴50: ${x.answeredAt} ${x.questionId} ${x.isCorrect?'○':'×'}`));
+if(o.completed)st.sessions.completed.forEach((x)=>lines.push(`- 完了: ${x.sessionId} ${x.mode} ${x.answeredCount}/${x.totalQuestions} ${x.accuracy}%`));
+if(o.abandoned)st.sessions.abandoned.forEach((x)=>lines.push(`- 途中終了: ${x.startedAt} ${x.mode} ${x.answeredCount}/${x.totalQuestions} 未回答${x.unansweredCount} ${x.durationSeconds}s`));
+if(o.unanswered)st.unfinished.forEach((x)=>lines.push(`- 未回答終了: ${x.sessionId} ${x.questionId}`));
+if(o.weak)st.mistakes.forEach((id)=>lines.push(`- 苦手: ${id}`));
+if(o.time)lines.push(`- 学習時間: 合計${st.sessions.totalSec}s 平均${st.sessions.avgSec}s`);
+if(o.request)lines.push('- AIへの依頼文: 実行しやすい手順と優先順位を明確化してください。');
+lines.push('','回答形式：','- まず結論','- 次に弱点分析','- 次に優先順位','- 最後に具体的な学習計画');
+return lines.join('\n');}
+function aiOptionsFromUI(){const keys=['summary','part','tags','diff','wrong','recent10','recent50','completed','abandoned','unanswered','weak','time','request'];const o={};keys.forEach((k)=>{o[k]=Boolean(document.getElementById('cb_'+k)?.checked);});return o;}
+function statusJa(s){return s==='completed'?'完了':(s==='abandoned'?'途中終了':'進行中');}
+function start(mode){clearTimeout(state.timer);const qs=getByMode(mode);if(!qs.length){state.screen='empty';state.emptyTitle=mode==='mistake'?'苦手復習':'対象問題がありません';state.emptyBody=mode==='mistake'?'復習対象はありません。間違えた問題がここに表示されます。':'対象問題がありません。';return render();}state.questions=qs;state.i=0;state.selected=null;state.answered=false;state.result=false;state.quizMessage='';state.showExplanation=state.settings.autoShowExplanation;state.sessionResults=[];const now=new Date().toISOString();state.session={sessionId:`s_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,mode,part:mode.startsWith('part')?Number(mode.slice(4)):(mode==='all'?'all':null),startedAt:now,endedAt:null,status:'in_progress',totalQuestions:qs.length,answeredCount:0,correctCount:0,wrongCount:0,unansweredCount:qs.length,accuracy:0,questionIds:qs.map((q)=>q.id),answeredQuestionIds:[],unfinishedQuestionIds:qs.map((q)=>q.id),durationSeconds:0,resultRecords:[]};const s=getSessions();s.unshift(state.session);saveSessions(s);state.screen='quiz';render();}
+function updateSessionStore(){const s=getSessions();const i=s.findIndex((x)=>x.sessionId===state.session.sessionId);if(i>=0)s[i]=state.session;else s.unshift(state.session);saveSessions(s);}
+function finalizeSession(status){if(!state.session)return;state.session.status=status;state.session.endedAt=new Date().toISOString();state.session.unansweredCount=Math.max(0,state.session.totalQuestions-state.session.answeredCount);state.session.accuracy=state.session.answeredCount?Math.round(state.session.correctCount/state.session.answeredCount*100):0;state.session.durationSeconds=Math.max(0,Math.round((Date.parse(state.session.endedAt)-Date.parse(state.session.startedAt))/1000));updateSessionStore();}
+function answer(){if(state.screen!=='quiz'||state.answered)return;if(state.selected===null){state.quizMessage='選択肢を選んでから回答してください。';render();return;}const q=state.questions[state.i];const ok=state.selected===q.answer;state.answered=true;state.result=ok;state.quizMessage='';const h=getHistory();h.push({questionId:q.id,part:q.part,selectedIndex:state.selected,correctIndex:q.answer,isCorrect:ok,answeredAt:new Date().toISOString(),difficulty:q.difficulty,tags:q.tags,mode:state.session.mode});saveHistory(h);const m=new Set(getMistakes());if(ok)m.delete(q.id);else m.add(q.id);saveMistakes([...m]);state.session.answeredCount++;if(ok)state.session.correctCount++;else state.session.wrongCount++;state.session.answeredQuestionIds.push(q.id);state.session.unfinishedQuestionIds=state.session.questionIds.filter((id)=>!state.session.answeredQuestionIds.includes(id));state.session.resultRecords.push({questionId:q.id,part:q.part,isCorrect:ok});state.sessionResults.push({questionId:q.id,part:q.part,isCorrect:ok});updateSessionStore();if(state.settings.autoNext){clearTimeout(state.timer);state.timer=setTimeout(()=>nextQ(true),state.settings.autoNextDelayMs);}render();setTimeout(()=>document.getElementById('nextBtn')?.focus(),20);}
+function nextQ(fromTimer=false){if(!state.answered)return;if(!fromTimer)clearTimeout(state.timer);if(state.i<state.questions.length-1){state.i++;state.selected=null;state.answered=false;state.quizMessage='';state.showExplanation=state.settings.autoShowExplanation;render();return;}clearTimeout(state.timer);finalizeSession('completed');state.screen='result';render();}
+function backHome(abandon=true){clearTimeout(state.timer);if(abandon&&state.screen==='quiz'&&state.session&&state.session.status==='in_progress')finalizeSession('abandoned');state.screen='home';render();}
+function resetHistory(){if(!confirm('学習履歴・苦手問題・セッション記録をすべて削除します。よろしいですか？'))return;saveHistory([]);saveMistakes([]);saveSessions([]);state.aiMessage='履歴をリセットしました';render();}
+function renderAiPromptBuilder(){const opts=[['summary','全体サマリー',1],['part','Part別正答率',1],['tags','タグ別正答率',1],['diff','難易度別正答率',0],['wrong','間違えた問題一覧',1],['recent10','直近10件の回答履歴',0],['recent50','直近50件の回答履歴',0],['completed','完了セッション一覧',0],['abandoned','途中終了セッション一覧',1],['unanswered','未回答で終わった問題一覧',0],['weak','苦手問題リスト',0],['time','学習時間サマリー',0],['request','AIへの依頼文',1]];
+return `<div class='card'><h2>AI分析プロンプト作成</h2>${opts.map((v)=>`<label><input type='checkbox' id='cb_${v[0]}' ${v[2]?'checked':''}>${escapeHtml(v[1])}</label>`).join('')}<div class='row' style='margin-top:10px;'><button class='p' onclick='genPrompt()'>プロンプト生成</button><button class='g' onclick='genPrompt()'>再生成</button><button class='g' onclick='copyAiPrompt()'>プロンプトをコピー</button><button class='g' onclick="state.screen='history';render()">学習履歴へ戻る</button><button class='g' onclick='backHome(false)'>ホームへ戻る</button></div><p id='copyMsg' class='muted'>${escapeHtml(state.aiMessage)}</p><textarea id='promptArea'>${escapeHtml(state.aiPromptText)}</textarea></div>`;}
+function genPrompt(){const o=aiOptionsFromUI();state.aiPromptText=buildAiPrompt(o);const area=document.getElementById('promptArea');if(area)area.value=state.aiPromptText;state.aiMessage='プロンプトを生成しました';const msg=document.getElementById('copyMsg');if(msg)msg.textContent=state.aiMessage;}
+async function copyAiPrompt(){const t=document.getElementById('promptArea');if(!t)return;if(!t.value.trim())genPrompt();try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(t.value);}else{t.focus();t.select();if(!document.execCommand('copy'))throw new Error('copy fail');}state.aiMessage='コピーしました';}catch(_){state.aiMessage='コピーできませんでした。手動で選択してコピーしてください';}const msg=document.getElementById('copyMsg');if(msg)msg.textContent=state.aiMessage;}
+function render(){const app=document.getElementById('app');const ov=calculateOverallStats();if(state.screen==='home'){const today=calculateTodaySummary();app.innerHTML=`<div class='card'><h2>学習サマリー</h2><div class='grid g4'><div class='sum'><strong>${ov.total}</strong><span>総回答数</span></div><div class='sum'><strong>${ov.rate}%</strong><span>正答率</span></div><div class='sum'><strong>${ov.mistakes}</strong><span>苦手問題</span></div><div class='sum'><strong>${calculateSessionStats().abandoned.length}</strong><span>途中終了</span></div></div></div><div class='card'><h2>今日の学習サマリー</h2><div class='grid g4'><div class='sum'><strong>${today.answers}</strong><span>今日の回答数</span></div><div class='sum'><strong>${today.correct}</strong><span>今日の正解数</span></div><div class='sum'><strong>${today.rate}%</strong><span>今日の正答率</span></div><div class='sum'><strong>${today.timeSec}s</strong><span>今日の学習時間</span></div></div></div><div class='card'><h2>おすすめアクション</h2><div class='passage'>${escapeHtml(getRecommendedAction())}</div></div><div class='card'><h2>演習を開始</h2><div class='grid g2'><button class='p' onclick="start('part5')">Part 5演習</button><button class='p' onclick="start('part6')">Part 6演習</button><button class='p' onclick="start('part7')">Part 7演習</button><button class='p' onclick="start('random')">ランダム演習</button><button class='p' onclick="start('all')">全部モード</button><button class='p' onclick="start('mistake')">苦手復習</button></div><div class='row' style='margin-top:10px;'><button class='g' onclick="state.screen='history';render()">学習履歴</button></div></div>`;return;}
+if(state.screen==='empty'){app.innerHTML=`<div class='card'><h2>${escapeHtml(state.emptyTitle)}</h2><p>${escapeHtml(state.emptyBody)}</p><button class='g' onclick='backHome(false)'>ホームへ戻る</button></div>`;return;}
+if(state.screen==='quiz'){const q=state.questions[state.i];const ratio=Math.round((state.i+1)/state.questions.length*100);app.innerHTML=`<div class='card'><p>${state.i+1} / ${state.questions.length}</p><div class='bar'><div class='fill' style='width:${ratio}%'></div></div><div style='margin-top:8px'><span class='badge bp'>Part ${escapeHtml(q.part)}</span><span class='badge bd'>${escapeHtml(q.difficulty)}</span>${q.tags.map((t)=>`<span class='badge bt'>${escapeHtml(t)}</span>`).join('')}</div><p><b>${escapeHtml(q.question)}</b></p>${q.passage?`<div class='passage'>${escapeHtml(q.passage)}</div>`:''}<div class='choices'>${q.choices.map((c,idx)=>{let cls='choice';if(state.selected===idx)cls+=' sel';if(state.answered){if(idx===q.answer)cls+=' ok';if(idx===state.selected&&idx!==q.answer)cls+=' ng';}return `<button class='${cls}' ${state.answered?'disabled':''} onclick='state.selected=${idx};state.quizMessage="";render()'>${String.fromCharCode(65+idx)}. ${escapeHtml(c)}</button>`;}).join('')}</div>${state.quizMessage?`<p class='msg warnm'>${escapeHtml(state.quizMessage)}</p>`:''}<div class='row' style='margin-top:10px;'><button class='p' onclick='answer()' ${state.answered?'disabled':''}>回答する (Enter)</button><button class='g' onclick='backHome(true)'>ホームへ戻る (Esc)</button></div>${state.answered?`<p class='msg ${state.result?'okm':'ngm'}'>${state.result?'正解です':'不正解です'}</p><label><input type='checkbox' ${state.showExplanation?'checked':''} onchange='state.showExplanation=this.checked;render()'>解説を表示する</label>${state.showExplanation?`<div class='passage'>${escapeHtml(q.explanation)}</div>`:''}<button id='nextBtn' class='p' onclick='nextQ(false)'>次へ (Enter)</button>`:''}</div><div class='card'><h3>設定</h3><label><input type='checkbox' ${state.settings.autoShowExplanation?'checked':''} onchange='state.settings.autoShowExplanation=this.checked;saveSettings(state.settings)'>解説を自動表示する</label><label><input type='checkbox' ${state.settings.autoNext?'checked':''} onchange='state.settings.autoNext=this.checked;saveSettings(state.settings)'>回答後に自動で次へ進む</label></div>`;return;}
+if(state.screen==='result'){const rec=state.sessionResults;const totalQ=state.session.totalQuestions,answered=state.session.answeredCount,correct=state.session.correctCount,un=Math.max(0,totalQ-answered),rate=answered?Math.round(correct/answered*100):0;const partRows=[5,6,7].map((p)=>{const r=rec.filter((x)=>x.part===p);const c=r.filter((x)=>x.isCorrect).length;return`<p>Part ${p}: ${c} / ${r.length} 正解 ${r.length?Math.round(c/r.length*100):0}%</p>`;}).join('');const wrongRows=rec.filter((x)=>!x.isCorrect).map((x)=>`<li>${escapeHtml(x.questionId)} - ${escapeHtml((qMap[x.questionId]&&qMap[x.questionId].question)||'unknown')}</li>`).join('')||'<li>なし</li>';app.innerHTML=`<div class='card'><h2>結果</h2><p>今回の出題数: ${totalQ}</p><p>今回の回答数: ${answered}</p><p>今回の正解数: ${correct}</p><p>今回の正答率: ${rate}%</p><p>未回答数: ${un}</p><h3>Part別正答率</h3>${partRows}<h3>間違えた問題一覧</h3><ul>${wrongRows}</ul><div class='row'><button class='p' onclick='backHome(false)'>ホームへ戻る</button><button class='g' onclick='start(state.session.mode)'>同じモードでもう一回</button></div></div>`;return;}
+if(state.screen==='history'){const p=calculatePartStats(),tag=calculateTagStats(),d=calculateDifficultyStats(),ss=calculateSessionStats();app.innerHTML=`<div class='card'><h2>学習履歴</h2><div class='grid g4'><div class='sum'><strong>${ov.total}</strong><span>総回答</span></div><div class='sum'><strong>${ov.rate}%</strong><span>正答率</span></div><div class='sum'><strong>${ss.completed.length}</strong><span>完了</span></div><div class='sum'><strong>${ss.abandoned.length}</strong><span>途中終了</span></div></div><p>合計学習時間: ${ss.totalSec}s / 平均学習時間: ${ss.avgSec}s</p><h3>Part別正答率</h3>${p.map((x)=>`<p>Part ${x.part}: ${x.correct}/${x.total} (${x.rate}%)</p>`).join('')}<h3>タグ別正答率 上位/下位</h3>${tag.slice(0,3).map((x)=>`<p>下位 ${escapeHtml(x.tag)}: ${x.rate}%</p>`).join('')}${tag.slice(-3).map((x)=>`<p>上位 ${escapeHtml(x.tag)}: ${x.rate}%</p>`).join('')}<h3>難易度別正答率</h3>${d.map((x)=>`<p>${escapeHtml(x.difficulty)}: ${x.correct}/${x.total} (${x.rate}%)</p>`).join('')}<div class='row'><button class='p' onclick="state.screen='ai';state.aiPromptText=buildAiPrompt({summary:true,part:true,tags:true,diff:false,wrong:true,recent10:false,recent50:false,completed:false,abandoned:true,unanswered:false,weak:false,time:false,request:true});render()">AI分析プロンプト作成</button><button class='d' onclick='resetHistory()'>履歴リセット</button><button class='g' onclick='backHome(false)'>ホームへ戻る</button></div></div><div class='card'><h3>直近セッション一覧</h3>${ss.recent.map((x)=>`<div class='session-card'><p>開始日時: ${escapeHtml(x.startedAt)}</p><p>モード: ${escapeHtml(x.mode)}</p><p>status: ${escapeHtml(statusJa(x.status))}</p><p>回答済み数 / 全問題数: ${x.answeredCount} / ${x.totalQuestions}</p><p>正答率: ${x.accuracy}%</p><p>未回答数: ${x.unansweredCount}</p><p>学習時間: ${x.durationSeconds}s</p></div>`).join('')}</div>`;return;}
+if(state.screen==='ai'){app.innerHTML=renderAiPromptBuilder();setTimeout(()=>{const area=document.getElementById('promptArea');if(area&&!area.value.trim())genPrompt();},0);}}
+window.addEventListener('beforeunload',()=>{if(state.screen==='quiz'&&state.session&&state.session.status==='in_progress')finalizeSession('abandoned');});
+document.addEventListener('keydown',(e)=>{if(state.screen!=='quiz')return;const m={a:0,b:1,c:2,d:3};const k=e.key.toLowerCase();if(k in m&&!state.answered){state.selected=m[k];state.quizMessage='';render();}if(e.key==='Enter'){e.preventDefault();state.answered?nextQ(false):answer();}if(e.key==='Escape'){e.preventDefault();backHome(true);}});
+function initApp(){state.settings=getSettings();state.showExplanation=state.settings.autoShowExplanation;closeStaleSessions();render();}
+window.start=start;window.render=render;window.answer=answer;window.nextQ=nextQ;window.backHome=backHome;window.genPrompt=genPrompt;window.copyAiPrompt=copyAiPrompt;window.resetHistory=resetHistory;
+initApp();
+</script>
 </body>
 </html>
