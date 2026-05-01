@@ -161,13 +161,74 @@ function calculateSessionStats(){const s=getSessions();const sec=s.reduce((a,b)=
 function getUnfinishedQuestionsFromSessions(){const out=[];getSessions().filter((s)=>s.status==='abandoned').forEach((s)=>(s.unfinishedQuestionIds||[]).forEach((id)=>out.push({sessionId:s.sessionId,questionId:id})));return out;}
 function getStatsForAi(){return{overall:calculateOverallStats(),parts:calculatePartStats(),tags:calculateTagStats(),diffs:calculateDifficultyStats(),sessions:calculateSessionStats(),history:getHistory(),mistakes:getMistakes(),unfinished:getUnfinishedQuestionsFromSessions()};}
 function getQuestionById(questionId){return qMap[String(questionId)]||null;}
+function fillBlankText(text,choice){
+  const src=String(text||'');
+  if(!src)return '';
+  if(choice===null||choice===undefined)return src;
+  const token=String(choice);
+  const blankRe=/(_____|____|___|\[blank\]|（空欄）|空欄)/;
+  return blankRe.test(src)?src.replace(blankRe,token):src;
+}
 function getAnswerDetail(record){
   const q=getQuestionById(record&&record.questionId);
   const selectedIndex=Number.isInteger(record&&record.selectedIndex)?record.selectedIndex:null;
   const correctIndex=Number.isInteger(record&&record.correctIndex)?record.correctIndex:(q&&Number.isInteger(q.answer)?q.answer:null);
   const selectedChoice=(q&&Array.isArray(q.choices)&&selectedIndex!==null&&selectedIndex>=0&&selectedIndex<q.choices.length)?q.choices[selectedIndex]:null;
   const correctChoice=(q&&Array.isArray(q.choices)&&correctIndex!==null&&correctIndex>=0&&correctIndex<q.choices.length)?q.choices[correctIndex]:null;
-  return {questionId:String((record&&record.questionId)||'unknown'),part:(record&&record.part)||((q&&q.part)||null),difficulty:(record&&record.difficulty)||((q&&q.difficulty)||'unknown'),tags:Array.isArray(record&&record.tags)?record.tags:((q&&q.tags)||[]),category:(q&&q.category)||null,question:(q&&q.question)||'',passage:(q&&q.passage)||'',choices:(q&&Array.isArray(q.choices))?q.choices:[],selectedIndex,selectedChoice,correctIndex,correctChoice,isCorrect:Boolean(record&&record.isCorrect),explanation:(q&&q.explanation)||'',answeredAt:(record&&record.answeredAt)||null};
+  const question=(q&&q.question)||'';
+  const passage=(q&&q.passage)||'';
+  const sentenceWithMistake=fillBlankText(question,selectedChoice);
+  const sentenceWithCorrectAnswer=fillBlankText(question,correctChoice);
+  return {questionId:String((record&&record.questionId)||'unknown'),part:(record&&record.part)||((q&&q.part)||null),difficulty:(record&&record.difficulty)||((q&&q.difficulty)||'unknown'),tags:Array.isArray(record&&record.tags)?record.tags:((q&&q.tags)||[]),category:(q&&q.category)||null,question,passage,choices:(q&&Array.isArray(q.choices))?q.choices:[],selectedIndex,selectedChoice,correctIndex,correctChoice,mistakenWord:selectedChoice,correctWord:correctChoice,sentenceWithMistake,sentenceWithCorrectAnswer,isCorrect:Boolean(record&&record.isCorrect),explanation:(q&&q.explanation)||'',answeredAt:(record&&record.answeredAt)||null};
+}
+function getMistakenWordInfo(answerDetail){
+  if(!answerDetail||typeof answerDetail!=='object')return null;
+  const selectedIndex=Number.isInteger(answerDetail.selectedIndex)?answerDetail.selectedIndex:null;
+  const correctIndex=Number.isInteger(answerDetail.correctIndex)?answerDetail.correctIndex:null;
+  const selectedChoice=('selectedChoice' in answerDetail)?answerDetail.selectedChoice:null;
+  const correctChoice=('correctChoice' in answerDetail)?answerDetail.correctChoice:null;
+  const mistakenWord=selectedChoice===null?null:selectedChoice;
+  const correctWord=correctChoice===null?null:correctChoice;
+  return {
+    questionId:String(answerDetail.questionId||'unknown'),
+    part:answerDetail.part??null,
+    category:answerDetail.category||null,
+    tags:Array.isArray(answerDetail.tags)?answerDetail.tags:[],
+    difficulty:answerDetail.difficulty||'unknown',
+    mistakenWord,
+    correctWord,
+    selectedIndex,
+    correctIndex,
+    selectedLabel:selectedIndex===null?null:String.fromCharCode(65+selectedIndex),
+    correctLabel:correctIndex===null?null:String.fromCharCode(65+correctIndex),
+    selectedChoice,
+    correctChoice,
+    originalQuestion:answerDetail.question||'',
+    sentenceWithMistake:fillBlankText(answerDetail.question||'',selectedChoice),
+    sentenceWithCorrectAnswer:fillBlankText(answerDetail.question||'',correctChoice),
+    passageWithMistake:fillBlankText(answerDetail.passage||'',selectedChoice),
+    passageWithCorrectAnswer:fillBlankText(answerDetail.passage||'',correctChoice),
+    explanation:answerDetail.explanation||'',
+    answeredAt:formatDateTime(answerDetail.answeredAt)
+  };
+}
+function getMistakenWordSummary(limit=50){
+  return getWrongQuestionDetails(limit).map((x)=>getMistakenWordInfo(x)).filter(Boolean);
+}
+function getWrongWordPatternSummary(){
+  const rows=getMistakenWordSummary(200);
+  const out={totalWrongAnswers:rows.length,mistakenWords:{},correctWords:{},mistakenToCorrectPairs:{},byCategory:{},byTag:{}};
+  const add=(obj,key)=>{const k=String(key);obj[k]=(obj[k]||0)+1;};
+  rows.forEach((x)=>{
+    const mistaken=x.selectedChoice===null?'未選択':String(x.selectedChoice);
+    const correct=x.correctChoice===null?'不明':String(x.correctChoice);
+    add(out.mistakenWords,mistaken);
+    add(out.correctWords,correct);
+    add(out.mistakenToCorrectPairs,`${mistaken} => ${correct}`);
+    add(out.byCategory,x.category||'unknown');
+    (Array.isArray(x.tags)?x.tags:[]).forEach((t)=>add(out.byTag,t||'unknown'));
+  });
+  return out;
 }
 function getQuestionPerformanceStats(){
   const map={};
@@ -215,8 +276,8 @@ function getStrengthPatternSummary(){
 function isTodayLocal(iso){const d=new Date(iso);const n=new Date();return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();}
 function calculateTodaySummary(){const h=getHistory().filter((x)=>isTodayLocal(x.answeredAt));const s=getSessions().filter((x)=>isTodayLocal(x.startedAt));const c=h.filter((x)=>x.isCorrect).length;return{answers:h.length,correct:c,rate:h.length?Math.round(c/h.length*100):0,timeSec:s.reduce((a,b)=>a+(b.durationSeconds||0),0)};}
 function getRecommendedAction(){const ov=calculateOverallStats();const p5=calculatePartStats().find((x)=>x.part===5);const ss=calculateSessionStats();if(ov.total===0)return'まずは「全部モード」で実力チェックしてみましょう。';if(ov.mistakes>0)return'苦手問題が残っています。まずは「苦手復習」がおすすめです。';if(p5&&p5.total>=3&&p5.rate<70)return'Part 5の文法・語彙問題を重点的に練習しましょう。';if(ss.abandoned.length>ss.completed.length)return'途中終了が多めです。短めのPart別演習から始めましょう。';if(ov.rate>=80)return'良いペースです。全部モードで総合力を確認しましょう。';return'ランダム演習で弱点の偏りをチェックしましょう。';}
-function buildAiPrompt(o){const st=getStatsForAi();const lines=['あなたはTOEIC学習コーチです。','以下は私の「TOEIC形式 英語トレーナー」の学習データです。','','目的：','私は、自分がどんな問題を間違えやすいのか、逆にどんな問題が得意なのかを知りたいです。','単にPart別の正答率を見るだけでなく、問題文・選択肢・選んだ回答・正解・解説をもとに、苦手パターンと得意パターンを分析してください。','','特に知りたいこと：','1. 私が間違えやすい問題タイプ','2. 私が得意な問題タイプ','3. 間違いが多い文法・語彙・読解パターン','4. 選択肢の選び方の癖','5. 正解できている問題に共通する特徴','6. 苦手問題の優先順位','7. 復習すべきタグ','8. 次に追加すべき練習問題のタイプ','9. 明日からの具体的な学習メニュー','10. 1週間の学習計画','','分析ルール：','- 問題IDだけで判断しないでください。','- 問題文、本文、選択肢、選んだ回答、正解、解説を見て判断してください。','- 正答率だけでなく、間違え方の傾向を見てください。','- 得意な問題も分析し、伸ばすべき強みを教えてください。','- データが少ない場合は「仮説」として書いてください。','- 推測と事実を分けて書いてください。','','学習データ：'];
-const detail=(x)=>{const b={questionId:x.questionId,part:x.part,difficulty:x.difficulty,tags:x.tags,category:x.category,isCorrect:x.isCorrect,answeredAt:formatDateTime(x.answeredAt)};if(o.includeQp){b.question=x.question;b.passage=x.passage;}if(o.includeChoices){b.choices={A:x.choices[0]||null,B:x.choices[1]||null,C:x.choices[2]||null,D:x.choices[3]||null};b.selected={index:x.selectedIndex,label:x.selectedIndex===null?null:String.fromCharCode(65+x.selectedIndex),text:x.selectedChoice};b.correct={index:x.correctIndex,label:x.correctIndex===null?null:String.fromCharCode(65+x.correctIndex),text:x.correctChoice};}else{b.selectedIndex=x.selectedIndex;b.correctIndex=x.correctIndex;}if(o.includeExp)b.explanation=x.explanation;return b;};
+function buildAiPrompt(o){const st=getStatsForAi();const lines=['あなたはTOEIC学習コーチです。','以下は私の「TOEIC形式 英語トレーナー」の学習データです。','','目的：','私は、自分がどんな問題を間違えやすいのか、逆にどんな問題が得意なのかを知りたいです。','単にPart別の正答率を見るだけでなく、問題文・選択肢・選んだ回答・正解・解説をもとに、苦手パターンと得意パターンを分析してください。','','特に知りたいこと：','1. 私が間違えやすい問題タイプ','2. 私が得意な問題タイプ','3. 間違いが多い文法・語彙・読解パターン','4. 選択肢の選び方の癖','5. 正解できている問題に共通する特徴','6. 苦手問題の優先順位','7. 復習すべきタグ','8. 次に追加すべき練習問題のタイプ','9. 明日からの具体的な学習メニュー','10. 1週間の学習計画','','分析ルール：','- 問題IDだけで判断しないでください。','- 問題文、本文、選択肢、選んだ回答、正解、解説を見て判断してください。','- 正答率だけでなく、間違え方の傾向を見てください。','- 得意な問題も分析し、伸ばすべき強みを教えてください。','- 間違えた単語と正解単語のペアを見て、混同しやすい語彙・前置詞・接続詞・品詞を分析してください。','- 誤答文と正解文を比較して、どの文法・語法が弱いか判断してください。','- 同じような誤答が繰り返されている場合は、優先して復習すべき表現として挙げてください。','- データが少ない場合は「仮説」として書いてください。','- 推測と事実を分けて書いてください。','','学習データ：'];
+const detail=(x)=>{const b={questionId:x.questionId,part:x.part,difficulty:x.difficulty,tags:x.tags,category:x.category,isCorrect:x.isCorrect,answeredAt:formatDateTime(x.answeredAt),mistakenWord:x.mistakenWord,correctWord:x.correctWord};if(o.includeFilledSentences){b.sentenceWithMistake=x.sentenceWithMistake;b.sentenceWithCorrectAnswer=x.sentenceWithCorrectAnswer;}if(o.includeQp){b.question=x.question;b.passage=x.passage;}if(o.includeChoices){b.choices={A:x.choices[0]||null,B:x.choices[1]||null,C:x.choices[2]||null,D:x.choices[3]||null};b.selected={index:x.selectedIndex,label:x.selectedIndex===null?null:String.fromCharCode(65+x.selectedIndex),text:x.selectedChoice};b.correct={index:x.correctIndex,label:x.correctIndex===null?null:String.fromCharCode(65+x.correctIndex),text:x.correctChoice};}else{b.selectedIndex=x.selectedIndex;b.correctIndex=x.correctIndex;}if(o.includeExp)b.explanation=x.explanation;return b;};
 if(o.summary)lines.push(`【全体サマリー】\n${JSON.stringify({totalAnswers:st.overall.total,totalCorrect:st.overall.correct,accuracy:st.overall.rate,mistakeQuestionCount:st.overall.mistakes},null,2)}`);
 if(o.part)lines.push(`【Part別正答率】\n${JSON.stringify(st.parts,null,2)}`);
 if(o.tags)lines.push(`【タグ別正答率】\n${JSON.stringify(st.tags,null,2)}`);
@@ -225,7 +286,9 @@ if(o.wrong)lines.push('【直近で間違えた問題の詳細】\n'+JSON.string
 if(o.correctDetails)lines.push('【直近で正解した問題の詳細】\n'+JSON.stringify(getCorrectQuestionDetails(o.correctLimit).map(detail),null,2));
 if(o.weakDetails)lines.push('【累計で苦手な問題の詳細】\n'+JSON.stringify(getWeakQuestionDetails(o.weakLimit).map((x)=>formatPerformanceDetailForPrompt(x,o)),null,2));
 if(o.strongDetails)lines.push('【累計で得意な問題の詳細】\n'+JSON.stringify(getStrongQuestionDetails(o.strongLimit).map((x)=>formatPerformanceDetailForPrompt(x,o)),null,2));
-if(o.mistakeSummary)lines.push('【間違い傾向サマリー】\n'+JSON.stringify(getMistakePatternSummary(),null,2));
+	if(o.mistakeSummary)lines.push('【間違い傾向サマリー】\n'+JSON.stringify(getMistakePatternSummary(),null,2));
+	if(o.mistakenWordList){const list=getMistakenWordSummary(o.wrongLimit).map((x)=>{if(o.includeFilledSentences)return x;const {sentenceWithMistake,sentenceWithCorrectAnswer,passageWithMistake,passageWithCorrectAnswer,...rest}=x;return rest;});lines.push('【間違えた単語・正解単語一覧】\n'+JSON.stringify(list,null,2));}
+	if(o.wrongWordPattern)lines.push('【間違えた単語パターン】\n'+JSON.stringify(getWrongWordPatternSummary(),null,2));
 if(o.strengthSummary)lines.push('【得意傾向サマリー】\n'+JSON.stringify(getStrengthPatternSummary(),null,2));
 if(o.choicePattern)lines.push('【選択肢の誤答パターン】\n'+JSON.stringify(getMistakePatternSummary().choiceConfusionPatterns,null,2));
 if(o.recent10)getHistory().slice(-10).forEach((x)=>lines.push(`- 履歴10: ${formatDateTime(x.answeredAt)} ${x.questionId} ${x.isCorrect?'○':'×'}`));
@@ -238,7 +301,7 @@ if(o.time)lines.push(`- 学習時間: 合計${formatDuration(st.sessions.totalSe
 if(o.request)lines.push('- AIへの依頼文: 実行しやすい手順と優先順位を明確化してください。');
 lines.push('','回答形式：','1. 結論','2. 苦手パターン','3. 得意パターン','4. 間違い方の癖','5. 優先して復習すべき内容','6. 追加するとよい練習問題','7. 明日やること','8. 1週間の学習計画');
 return lines.join('\n');}
-function aiOptionsFromUI(){const keys=['summary','part','tags','diff','wrong','correctDetails','weakDetails','strongDetails','mistakeSummary','strengthSummary','choicePattern','includeQp','includeChoices','includeExp','recent10','recent50','completed','abandoned','unanswered','weak','time','request'];const o={};keys.forEach((k)=>{o[k]=Boolean(document.getElementById('cb_'+k)?.checked);});const num=(id,def)=>{const el=document.getElementById(id);const v=Number(el&&el.value);if(!Number.isInteger(v)||v<1||v>100){if(el)el.value=String(def);return def;}return v;};o.wrongLimit=num('wrongLimit',20);o.correctLimit=num('correctLimit',10);o.weakLimit=num('weakLimit',20);o.strongLimit=num('strongLimit',10);return o;}
+function aiOptionsFromUI(){const keys=['summary','part','tags','diff','wrong','correctDetails','weakDetails','strongDetails','mistakeSummary','strengthSummary','choicePattern','mistakenWordList','wrongWordPattern','includeFilledSentences','includeQp','includeChoices','includeExp','recent10','recent50','completed','abandoned','unanswered','weak','time','request'];const o={};keys.forEach((k)=>{o[k]=Boolean(document.getElementById('cb_'+k)?.checked);});const num=(id,def)=>{const el=document.getElementById(id);const v=Number(el&&el.value);if(!Number.isInteger(v)||v<1||v>100){if(el)el.value=String(def);return def;}return v;};o.wrongLimit=num('wrongLimit',20);o.correctLimit=num('correctLimit',10);o.weakLimit=num('weakLimit',20);o.strongLimit=num('strongLimit',10);return o;}
 function statusJa(s){return s==='completed'?'完了':(s==='abandoned'?'途中終了':'進行中');}
 function start(mode){clearTimeout(state.timer);const qs=getByMode(mode);if(!qs.length){state.screen='empty';state.emptyTitle=mode==='mistake'?'苦手復習':'対象問題がありません';state.emptyBody=mode==='mistake'?'復習対象はありません。間違えた問題がここに表示されます。':'対象問題がありません。';return render();}state.questions=qs;state.i=0;state.selected=null;state.answered=false;state.result=false;state.quizMessage='';state.showExplanation=state.settings.autoShowExplanation;state.sessionResults=[];const now=new Date().toISOString();state.session={sessionId:`s_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,mode,part:mode.startsWith('part')?Number(mode.slice(4)):(mode==='all'?'all':null),startedAt:now,endedAt:null,status:'in_progress',totalQuestions:qs.length,answeredCount:0,correctCount:0,wrongCount:0,unansweredCount:qs.length,accuracy:0,questionIds:qs.map((q)=>q.id),answeredQuestionIds:[],unfinishedQuestionIds:qs.map((q)=>q.id),durationSeconds:0,resultRecords:[]};const s=getSessions();s.unshift(state.session);saveSessions(s);state.screen='quiz';render();}
 function updateSessionStore(){const s=getSessions();const i=s.findIndex((x)=>x.sessionId===state.session.sessionId);if(i>=0)s[i]=state.session;else s.unshift(state.session);saveSessions(s);}
@@ -247,14 +310,14 @@ function answer(){if(state.screen!=='quiz'||state.answered)return;if(state.selec
 function nextQ(fromTimer=false){if(!state.answered)return;if(!fromTimer)clearTimeout(state.timer);if(state.i<state.questions.length-1){state.i++;state.selected=null;state.answered=false;state.quizMessage='';state.showExplanation=state.settings.autoShowExplanation;render();return;}clearTimeout(state.timer);finalizeSession('completed');state.screen='result';render();}
 function backHome(abandon=true){clearTimeout(state.timer);if(abandon&&state.screen==='quiz'&&state.session&&state.session.status==='in_progress')finalizeSession('abandoned');state.screen='home';render();}
 function resetHistory(){if(!confirm('学習履歴・苦手問題・セッション記録をすべて削除します。よろしいですか？'))return;saveHistory([]);saveMistakes([]);saveSessions([]);state.aiMessage='履歴をリセットしました';render();}
-function getDefaultAiPromptOptions(){return{summary:true,part:true,tags:true,diff:true,wrong:true,correctDetails:true,weakDetails:true,strongDetails:true,mistakeSummary:true,strengthSummary:true,choicePattern:true,includeQp:true,includeChoices:true,includeExp:true,recent10:false,recent50:false,completed:false,abandoned:false,unanswered:false,weak:false,time:true,request:true,wrongLimit:20,correctLimit:10,weakLimit:20,strongLimit:10};}
+function getDefaultAiPromptOptions(){return{summary:true,part:true,tags:true,diff:true,wrong:true,correctDetails:true,weakDetails:true,strongDetails:true,mistakeSummary:true,strengthSummary:true,choicePattern:true,mistakenWordList:true,wrongWordPattern:true,includeFilledSentences:true,includeQp:true,includeChoices:true,includeExp:true,recent10:false,recent50:false,completed:false,abandoned:false,unanswered:false,weak:false,time:true,request:true,wrongLimit:20,correctLimit:10,weakLimit:20,strongLimit:10};}
 function renderAiPromptBuilder(){
 const d=getDefaultAiPromptOptions();
 return `<div class='card'><h2>AI分析プロンプト作成</h2>
 <h3>1. 基本統計</h3><label><input type='checkbox' id='cb_summary' ${d.summary?'checked':''}>全体サマリー</label><label><input type='checkbox' id='cb_part' ${d.part?'checked':''}>Part別正答率</label><label><input type='checkbox' id='cb_tags' ${d.tags?'checked':''}>タグ別正答率</label><label><input type='checkbox' id='cb_diff' ${d.diff?'checked':''}>難易度別正答率</label>
 <h3>2. 問題詳細</h3><label><input type='checkbox' id='cb_wrong' ${d.wrong?'checked':''}>直近で間違えた問題の詳細</label><label><input type='checkbox' id='cb_correctDetails' ${d.correctDetails?'checked':''}>直近で正解した問題の詳細</label><label><input type='checkbox' id='cb_weakDetails' ${d.weakDetails?'checked':''}>苦手問題の詳細</label><label><input type='checkbox' id='cb_strongDetails' ${d.strongDetails?'checked':''}>得意問題の詳細</label>
 <div class='grid g2'><label>間違えた問題詳細の件数<input type='number' id='wrongLimit' min='1' max='100' value='20'></label><label>正解した問題詳細の件数<input type='number' id='correctLimit' min='1' max='100' value='10'></label><label>苦手問題詳細の件数<input type='number' id='weakLimit' min='1' max='100' value='20'></label><label>得意問題詳細の件数<input type='number' id='strongLimit' min='1' max='100' value='10'></label></div>
-<h3>3. 傾向分析</h3><label><input type='checkbox' id='cb_mistakeSummary' ${d.mistakeSummary?'checked':''}>間違い傾向サマリー</label><label><input type='checkbox' id='cb_strengthSummary' ${d.strengthSummary?'checked':''}>得意傾向サマリー</label><label><input type='checkbox' id='cb_choicePattern' ${d.choicePattern?'checked':''}>選択肢の誤答パターン</label>
+	<h3>3. 傾向分析</h3><label><input type='checkbox' id='cb_mistakeSummary' ${d.mistakeSummary?'checked':''}>間違い傾向サマリー</label><label><input type='checkbox' id='cb_strengthSummary' ${d.strengthSummary?'checked':''}>得意傾向サマリー</label><label><input type='checkbox' id='cb_choicePattern' ${d.choicePattern?'checked':''}>選択肢の誤答パターン</label><label><input type='checkbox' id='cb_mistakenWordList' ${d.mistakenWordList?'checked':''}>間違えた単語・正解単語一覧</label><label><input type='checkbox' id='cb_wrongWordPattern' ${d.wrongWordPattern?'checked':''}>間違えた単語パターン</label><label><input type='checkbox' id='cb_includeFilledSentences' ${d.includeFilledSentences?'checked':''}>誤答文と正解文を含める</label><p class='muted'>「間違えた単語・正解単語一覧」をONにすると、選んだ選択肢と正解選択肢を比較して、どの単語・表現を間違えたかをAIに渡せます。</p>
 <h3>4. セッション情報</h3><label><input type='checkbox' id='cb_completed'>完了セッション一覧</label><label><input type='checkbox' id='cb_abandoned'>途中終了セッション一覧</label><label><input type='checkbox' id='cb_unanswered'>未回答で終わった問題一覧</label><label><input type='checkbox' id='cb_time' ${d.time?'checked':''}>学習時間サマリー</label><label><input type='checkbox' id='cb_recent50'>直近50件の回答履歴</label><label><input type='checkbox' id='cb_recent10'>直近10件の回答履歴</label><label><input type='checkbox' id='cb_weak'>苦手問題リスト(旧)</label>
 <h3>5. 出力オプション</h3><label><input type='checkbox' id='cb_includeQp' ${d.includeQp?'checked':''}>問題文・本文を含める</label><label><input type='checkbox' id='cb_includeChoices' ${d.includeChoices?'checked':''}>選択肢を含める</label><label><input type='checkbox' id='cb_includeExp' ${d.includeExp?'checked':''}>解説を含める</label><label><input type='checkbox' id='cb_request' ${d.request?'checked':''}>AIへの依頼文</label>
 <div class='row' style='margin-top:10px;'><button class='p' onclick='genPrompt()'>再生成</button><button class='g' onclick='copyAiPrompt()'>プロンプトをコピー</button><button class='g' onclick="state.screen='history';render()">学習履歴へ戻る</button><button class='g' onclick='backHome(false)'>ホームへ戻る</button></div><p id='copyMsg' class='muted'>${escapeHtml(state.aiMessage)}</p><textarea id='promptArea'>${escapeHtml(state.aiPromptText)}</textarea></div>`;}
