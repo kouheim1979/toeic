@@ -1,0 +1,13 @@
+export const safeParse = globalThis.safeParse;
+export const safeSet = globalThis.safeSet;
+export const normalizeHistory = globalThis.normalizeHistory;
+export const normalizeSessions = globalThis.normalizeSessions;
+export const getHistory = globalThis.getHistory;
+export const saveHistory = globalThis.saveHistory;
+export const getMistakes = globalThis.getMistakes;
+export const saveMistakes = globalThis.saveMistakes;
+export const getSessions = globalThis.getSessions;
+export const saveSessions = globalThis.saveSessions;
+export const getSettings = globalThis.getSettings;
+export const saveSettings = globalThis.saveSettings;
+export const closeStaleSessions = globalThis.closeStaleSessions;
