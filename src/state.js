@@ -1,1 +1,20 @@
-export const state = globalThis.state || {};
+export const state = {
+  transcriptVisible: false,
+  audioUnsupported: '',
+  screen: 'home',
+  questions: [],
+  i: 0,
+  selected: null,
+  answered: false,
+  result: false,
+  showExplanation: true,
+  settings: null,
+  session: null,
+  sessionResults: [],
+  timer: null,
+  emptyTitle: '',
+  emptyBody: '',
+  aiMessage: '',
+  quizMessage: '',
+  aiPromptText: ''
+};
