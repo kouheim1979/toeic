@@ -5,7 +5,7 @@
   const baseCfg={apiBase:DEFAULT_API,aiVoice:false,preferNative:false,scenario:"daily",level:"A2-B1"};
   function loadCfg(){try{const x=JSON.parse(localStorage.getItem(CONFIG_KEY)||"{}");return {...baseCfg,...(x&&typeof x==="object"?x:{})};}catch(e){return {...baseCfg};}}
   let cfg=loadCfg();
-  const st={status:"unknown",messages:[],busy:false,suggested:"",lastTranscript:"",generated:null,recording:false};
+  const st={status:"unknown",messages:[],busy:false,suggested:"",lastTranscript:"",generated:null,recording:false,shadow:{target:"",transcript:"",score:null}};
   let rec=null,stream=null,chunks=[],purpose="",recordTimer=null,recognition=null,audio=null,drillFeedback=null;
   const esc=v=>typeof h==="function"?h(v):String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
   const toast=t=>typeof showToast==="function"?showToast(t):alert(t);
@@ -20,6 +20,15 @@
       const j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.error||`AI API ${r.status}`);return j;
     }finally{clearTimeout(timer);}
   }
+
+  function normSpeech(v){return String(v||"").normalize("NFKC").toLowerCase().replace(/[’]/g,"'").replace(/[^\p{L}\p{N}' ]/gu," ").replace(/\s+/g," ").trim();}
+  function speechScore(expected,heard){
+    const a=normSpeech(expected),b=normSpeech(heard);if(!a||!b)return 0;const x=[...a],y=[...b],dp=Array(y.length+1).fill(0).map((_,j)=>j);
+    for(let i=1;i<=x.length;i++){let prev=dp[0];dp[0]=i;for(let j=1;j<=y.length;j++){const old=dp[j];dp[j]=Math.min(dp[j]+1,dp[j-1]+1,prev+(x[i-1]===y[j-1]?0:1));prev=old;}}
+    return Math.max(0,Math.round((1-dp[y.length]/Math.max(x.length,y.length))*100));
+  }
+  function ensureShadow(){if(!st.shadow.target){const pool=(typeof DRILLS!=="undefined"?DRILLS:[]).map(d=>d.answer).filter(Boolean);st.shadow.target=pool.length?pool[Math.floor(Math.random()*pool.length)]:"I take the train to work every morning.";}}
+  function nextShadow(){const before=st.shadow.target;st.shadow={target:"",transcript:"",score:null};ensureShadow();if(st.shadow.target===before&&typeof DRILLS!=="undefined"&&DRILLS.length>1)st.shadow.target=DRILLS[(DRILLS.findIndex(d=>d.answer===before)+1)%DRILLS.length].answer;renderAi();}
   function statusHtml(){const c=st.status==="online"?"online":"offline",t=st.status==="online"?"● AI接続中":st.status==="checking"?"… 接続確認中":"○ AI未接続";return `<span class="ai-status ${c}">${t}</span>`;}
   async function health(show=true){
     st.status="checking";if(typeof render==="function")render();
@@ -30,9 +39,11 @@
   function aiHomeButton(){return `<button class="btn ai-purple" data-ai="open">🤖 AI英会話・先生</button>`;}
   function aiPlayCard(){return `<section class="card ai-hero"><div class="ai-title"><span class="ai-orb">AI</span><div><h2>AI英会話・AI先生</h2><p class="muted small">話す → 文字起こし → 文法チェック → 会話を続ける</p></div></div><button class="btn ai-purple" data-ai="open" style="margin-top:12px;width:100%">🎙️ AIモードを開く</button></section>`;}
   function renderAi(){
+    ensureShadow();
     const scenarios={daily:"日常会話",travel:"旅行",work:"仕事・会議",restaurant:"レストラン",free:"フリートーク"};
     root.innerHTML=`<section class="card ai-hero"><div class="section-title"><div class="ai-title"><span class="ai-orb">AI</span><div><span class="eyebrow">VOICE COACH</span><h2>しゃべって、直して、また話す。</h2></div></div>${statusHtml()}</div><p class="muted">英語を話すと文字起こしし、AIが会話を続けます。文法・語彙のミスは1つだけ短く直します。</p><div class="chips">${Object.entries(scenarios).map(([k,v])=>`<button class="chip" data-ai="scenario" data-value="${k}" style="${cfg.scenario===k?"background:#ece8ff;border-color:#a78bfa;color:#5b21b6":""}">${v}</button>`).join("")}</div><div class="toolbar" style="margin-top:12px"><button class="btn soft" data-ai="health">接続確認</button><button class="btn soft" data-ai="generate">🧠 苦手からAI問題</button></div></section>
       <section class="card"><div class="section-title"><h2>💬 AI英会話</h2><span class="tag">${esc(cfg.level)}</span></div><div class="ai-chat" id="aiChat">${st.messages.length?st.messages.map((m,i)=>`<div class="ai-bubble ${m.role}"><div class="ai-role">${m.role==="user"?"YOU":"AI COACH"}</div><div>${esc(m.content)}</div>${m.correction?`<div class="ai-note"><strong>✏️ ${esc(m.correction)}</strong><br>${esc(m.explanationJa||"")}</div>`:""}${m.role==="assistant"?`<button class="textbutton" data-ai="speak-message" data-i="${i}">🔊 この返答を聞く</button>`:""}</div>`).join(""):`<div class="empty"><div class="empty-emoji">🎧</div><p>英語で短く話してみよう。マイクでも文字入力でもOKです。</p></div>`}</div>${st.suggested?`<button class="chip" data-ai="suggested">💡 ${esc(st.suggested)}</button>`:""}<div class="ai-compose"><textarea id="aiText" maxlength="600" placeholder="英語を入力するか、マイクで話してください">${esc(st.lastTranscript)}</textarea><button class="ai-mic ${st.recording?"recording":""}" data-ai="mic-chat">${st.recording?"■":"🎙️"}</button></div><div class="toolbar" style="margin-top:10px"><button class="btn ai-purple" data-ai="send" ${st.busy?"disabled":""}>${st.busy?"AIが考え中…":"送信 →"}</button><button class="btn soft" data-ai="clear">会話をリセット</button></div><p class="small muted">AIは文字起こしされた英文の内容・文法を見ます。発音の良し悪しを直接採点するものではありません。</p></section>
+      <section class="card"><div class="section-title"><h2>🎧 シャドーイング</h2><span class="tag">聞く → まねる</span></div><p class="muted">見本を聞いて、同じ英文を続けて言ってみよう。</p><div class="model-card"><span class="eyebrow">SHADOWING SENTENCE</span><p class="model-sentence">${esc(st.shadow.target)}</p></div><div class="toolbar"><button class="btn blue" data-ai="shadow-play">🔊 見本を聞く</button><button class="btn ai-purple" data-ai="shadow-mic">${st.recording?"■ 録音停止":"🎙️ まねして話す"}</button><button class="btn soft" data-ai="shadow-next">次の英文</button></div>${st.shadow.transcript?`<div class="ai-eval"><div class="grid two"><div class="ai-score">${st.shadow.score}%</div><div><strong>音声認識の一致目安</strong><p class="small">認識：${esc(st.shadow.transcript)}</p></div></div><p class="small muted">音素単位の発音採点ではありません。見本文と音声認識結果がどの程度一致したかの目安です。</p></div>`:""}</section>
       ${st.generated?`<section class="card"><h2>✨ AI追加ドリル</h2><div class="ai-generated"><span class="tag">${esc(st.generated.type)}</span><p class="source-sentence">${esc(st.generated.source)}</p><p><strong>${esc(st.generated.cueJa)}</strong></p><p class="muted">${esc(st.generated.cue)}</p><details><summary>見本を見る</summary><p class="model-sentence">${esc(st.generated.answer)}</p><p>${esc(st.generated.ja)}</p><p class="tip">💡 ${esc(st.generated.tip)}</p></details></div></section>`:""}`;
     requestAnimationFrame(()=>{const c=document.getElementById("aiChat");if(c)c.scrollTop=c.scrollHeight;});
   }
@@ -60,9 +71,9 @@
     try{stream=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];purpose=why;rec=new MediaRecorder(stream);rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};rec.onstop=async()=>{const blob=new Blob(chunks,{type:rec?.mimeType||"audio/webm"});stream?.getTracks().forEach(t=>t.stop());stream=null;st.recording=false;render();if(blob.size<500)return;try{toast("AIが文字起こし中…");const b=await blob64(blob);const j=await req("/api/transcribe",{audio:b,mediaType:blob.type||"audio/webm"},45000);recognized(why,j.text||"");}catch(e){toast(e.message||"文字起こしに失敗しました");}};rec.start();st.recording=true;render();recordTimer=setTimeout(()=>{if(rec?.state==="recording")rec.stop();},12000);}
     catch(e){toast("マイクを使えません。マイク許可を確認してください");stopRecord(true);render();}
   }
-  function recognized(why,text){text=String(text||"").trim();if(!text){toast("英語を認識できませんでした");return;}if(why==="chat"){st.lastTranscript=text;if(state.screen==="ai")renderAi();chat(text);}else if(why==="drill")evaluateDrill(text);}
-  async function evaluateDrill(transcript){const d=rItem();if(!d)return;drillFeedback={loading:true,transcript};renderDrill();try{const j=await req("/api/evaluate",{target:d.answer,transcript,cue:d.cue,source:d.source});drillFeedback=j;}catch(e){drillFeedback={error:e.message,transcript};}renderDrill();}
-  function feedbackHtml(){const r=drillFeedback;if(!r)return"";if(r.loading)return`<div class="ai-eval">🤖 AI先生が確認中…</div>`;if(r.error)return`<div class="ai-eval"><strong>⚠️ ${esc(r.error)}</strong><p class="small">認識：${esc(r.transcript||"")}</p></div>`;return `<div class="ai-eval"><div class="grid two"><div class="ai-score">${Number(r.score)||0}</div><div><strong>${r.correct?"✅ 内容・文法はOK":"✏️ もう一歩"}</strong><p class="small">認識：${esc(r.transcript||"")}</p></div></div>${r.praise?`<p><strong>${esc(r.praise)}</strong></p>`:""}${r.corrected?`<p>おすすめ：<strong>${esc(r.corrected)}</strong></p>`:""}${r.explanationJa?`<p>${esc(r.explanationJa)}</p>`:""}${r.grammarPoint?`<p class="tip">💡 ${esc(r.grammarPoint)}</p>`:""}<p class="small muted">音声そのものの発音採点ではなく、文字起こしされた英文の内容・文法評価です。</p></div>`;}
+  function recognized(why,text){text=String(text||"").trim();if(!text){toast("英語を認識できませんでした");return;}if(why==="chat"){st.lastTranscript=text;if(state.screen==="ai")renderAi();chat(text);}else if(why==="drill")evaluateDrill(text);else if(why==="shadow"){ensureShadow();st.shadow.transcript=text;st.shadow.score=speechScore(st.shadow.target,text);renderAi();}}
+  async function evaluateDrill(transcript){const d=rItem();if(!d)return;const match=speechScore(d.answer,transcript);drillFeedback={loading:true,transcript,speechMatch:match};renderDrill();try{const j=await req("/api/evaluate",{target:d.answer,transcript,cue:d.cue,source:d.source});drillFeedback={...j,speechMatch:match};}catch(e){drillFeedback={error:e.message,transcript,speechMatch:match};}renderDrill();}
+  function feedbackHtml(){const r=drillFeedback;if(!r)return"";if(r.loading)return`<div class="ai-eval">🤖 AI先生が確認中…</div>`;if(r.error)return`<div class="ai-eval"><strong>⚠️ ${esc(r.error)}</strong><p class="small">認識：${esc(r.transcript||"")}</p></div>`;return `<div class="ai-eval"><div class="grid two"><div class="ai-score">${Number(r.score)||0}</div><div><strong>${r.correct?"✅ 内容・文法はOK":"✏️ もう一歩"}</strong><p class="small">認識：${esc(r.transcript||"")}</p></div></div>${r.praise?`<p><strong>${esc(r.praise)}</strong></p>`:""}${r.corrected?`<p>おすすめ：<strong>${esc(r.corrected)}</strong></p>`:""}${r.explanationJa?`<p>${esc(r.explanationJa)}</p>`:""}${r.grammarPoint?`<p class="tip">💡 ${esc(r.grammarPoint)}</p>`:""}<p><span class="tag">🎙️ 認識一致 ${Number(r.speechMatch)||0}%</span></p><p class="small muted">音素単位の発音採点ではありません。認識一致は見本文と文字起こしの一致率、AI点数は英文の内容・文法評価です。</p></div>`;}
   async function generate(){try{toast("AIが追加ドリルを作成中…");const recent=typeof dueDrills==="function"?dueDrills().slice(0,5).map(d=>d.answer):[];st.generated=await req("/api/generate-drill",{level:cfg.level,focus:"daily spoken English",recentMistakes:recent});state.screen="ai";render();}catch(e){toast(e.message||"AI問題を作れませんでした");}}
 
   const oldNavSection=navSection;navSection=function(){if(state.screen==="ai")return"play";return oldNavSection();};
@@ -83,6 +94,9 @@
     else if(a==="send")chat(document.getElementById("aiText")?.value||"");
     else if(a==="mic-chat")mic("chat");
     else if(a==="judge")mic("drill");
+    else if(a==="shadow-play"){ensureShadow();aiSpeak(st.shadow.target);}
+    else if(a==="shadow-mic")mic("shadow");
+    else if(a==="shadow-next")nextShadow();
     else if(a==="clear"){st.messages=[];st.suggested="";st.lastTranscript="";renderAi();}
     else if(a==="suggested"){st.lastTranscript=st.suggested;renderAi();document.getElementById("aiText")?.focus();}
     else if(a==="speak-message"){const m=st.messages[Number(b.dataset.i)];if(m)aiSpeak(m.content);}
