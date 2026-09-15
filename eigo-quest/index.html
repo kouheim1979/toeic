@@ -13,11 +13,12 @@
 <script>
 (async()=>{
   try{
-    const r=await fetch('./legacy.html?v=20260915-ai1',{cache:'no-store'});
+    const r=await fetch('./legacy.html?v=20260915-ai2',{cache:'no-store'});
     if(!r.ok)throw new Error('legacy '+r.status);
     let html=await r.text();
-    html=html.replace('</head>','<link rel="stylesheet" href="./ai-addon.css?v=20260915-ai1"></head>');
-    html=html.replace('</body>','<script src="./ai-addon.js?v=20260915-ai1"><\\/script></body>');
+    html=html.replace('</head>','<link rel="stylesheet" href="./ai-addon.css?v=20260915-ai2"></head>');
+    const addon='<script src="./ai-addon.js?v=20260915-ai2"><' + '/script>';
+    html=html.replace('</body>',addon+'</body>');
     document.open();document.write(html);document.close();
   }catch(e){
     document.body.innerHTML='<main class="boot"><h1>読み込みに失敗しました</h1><p>ページを再読み込みしてください。</p><button onclick="location.reload()">再読み込み</button></main>';
