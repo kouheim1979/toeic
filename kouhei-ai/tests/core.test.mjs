@@ -10,6 +10,18 @@ const context = vm.createContext({ crypto: webcrypto, URL });
 vm.runInContext(source, context);
 const C = vm.runInContext('KouheiCore', context);
 
+test('the Japanese lightweight model has a short context and does not receive Qwen3 thinking markers',()=>{
+  const state=C.newState(),chat=state.chats[0];
+  chat.messages.push({role:'user',content:'質問'.repeat(250),status:'ok'});
+  const messages=C.buildMessages(state,chat,[],true);
+  assert.equal(messages.at(-1).content,chat.messages[0].content);
+  assert.ok(messages.reduce((n,m)=>n+m.content.length,0)<=1400);
+  assert.ok(!messages[0].content.includes('/no_think'));
+  assert.equal(C.generationOptions(state.model).extra_body,undefined);
+  assert.equal(C.generationOptions(state.model).max_tokens,256);
+  assert.equal(C.generationOptions('Qwen3-0.6B-q4f16_1-MLC').extra_body.enable_thinking,false);
+});
+
 test('backup round trip preserves content but never imports a token or executable role', () => {
   const state = C.newState();
   state.sessionToken = 'must-not-survive';

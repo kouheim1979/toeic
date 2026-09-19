@@ -56,6 +56,18 @@ test('storage errors keep the current result in memory and expose that it could 
   assert.equal(trace.snapshot().storageWritable,false);
 });
 
+test('a page restart during model loading preserves the stage and requires the small-model test again',()=>{
+  let value;const storage={getItem:()=>value,setItem:(_,v)=>{value=v;}};
+  const first=D.journal(storage);
+  first.startStartup('smoke',D.SMOKE_MODEL);first.finishStartup('complete');
+  assert.ok(first.snapshot().smokePassedAt);
+  first.startStartup('model','Qwen2.5-0.5B-Instruct-q4f16_1-MLC');first.step('weights-to-gpu-6');
+  const next=D.journal(storage),saved=next.snapshot();
+  assert.equal(saved.startup.status,'interrupted');
+  assert.equal(saved.startup.stage,'weights-to-gpu-6');
+  assert.equal(saved.smokePassedAt,null);
+});
+
 test('restored diagnostic results only contain approved diagnostic fields',()=>{
   const value=JSON.stringify({diagnostic:{version:'1.0.4',status:'complete',stage:'gpu-passed',result:{ok:true,shaderF16:true,token:'private',messages:['private'],maxBufferSize:Infinity}}});
   const trace=D.journal({getItem:()=>value,setItem(){}});
@@ -66,7 +78,7 @@ test('the UI blocks empty-result sharing and enables it after the actual diagnos
   const elements=new Map(),trace=D.journal({getItem:()=>null,setItem(){}});
   let copied;
   const ui=vm.createContext({
-    KouheiDiagnostics:D,trace,SAFE_LOCAL:true,
+    KouheiDiagnostics:D,trace,SAFE_LOCAL:true,MOBILE_LOCAL:true,restartRequired:false,state:{model:'Qwen2.5-0.5B-Instruct-q4f16_1-MLC'},
     window:{isSecureContext:true},
     navigator:{userAgent:'test',platform:'test',clipboard:{writeText:async text=>{copied=JSON.parse(text);}}},
     $:id=>{if(!elements.has(id))elements.set(id,{textContent:'',value:'',disabled:false});return elements.get(id);}
