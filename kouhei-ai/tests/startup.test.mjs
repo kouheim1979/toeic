@@ -27,7 +27,7 @@ function fixture({ reload = async () => {}, importFailure = false, safe = false 
     },
   });
   vm.runInContext(`
-    const RUNTIMES=['primary','fallback'];const SAFE_LOCAL=${safe};const RECOVERY_MESSAGE='端末内AIを停止しています';
+    const trace={start(){},end(){},step(){},snapshot(){return {};}};const RUNTIMES=['primary','fallback'];const SAFE_LOCAL=${safe};const RECOVERY_MESSAGE='端末内AIを停止しています';
     let runtimePromise=null,engine=null,loadedModel='',loadVersion=0,loading=false;
     const state={model:'Qwen3-0.6B-q4f16_1-MLC'};
     const guard=()=>!loading,renderEngine=()=>{},toast=()=>{};
