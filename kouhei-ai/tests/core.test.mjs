@@ -33,6 +33,21 @@ test('backup round trip preserves content but never imports a token or executabl
   assert.throws(() => C.normalizeState(state), /形式/);
 });
 
+test('Qwen3 trial choices survive backup and use the mobile conversation and response limits',()=>{
+  for(const model of ['Qwen3-0.6B-q4f16_1-MLC',C.QWEN35_MODEL]){
+    const state=C.newState();state.model=model;
+    const chat=state.chats[0];
+    for(let i=0;i<12;i++)chat.messages.push({role:i%2?'assistant':'user',content:'過去の会話'.repeat(50),status:'ok'});
+    chat.messages.push({role:'user',content:'今日の質問',status:'ok'});
+    const messages=C.buildMessages(state,chat,[],true,true);
+    assert.equal(messages.at(-1).content,'今日の質問');
+    assert.ok(messages.reduce((n,m)=>n+m.content.length,0)<=1400);
+    assert.equal(C.generationOptions(model,true).max_tokens,256);
+    assert.equal(C.generationOptions(model,true).extra_body.enable_thinking,false);
+    assert.equal(C.normalizeState(state).model,model);
+  }
+});
+
 test('corrupt and duplicate backup content fails without silently resetting it', () => {
   assert.throws(() => C.normalizeState({}), /バックアップ/);
   const state = C.newState();

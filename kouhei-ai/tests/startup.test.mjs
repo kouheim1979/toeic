@@ -26,11 +26,12 @@ function fixture({ reload = async () => {}, importFailure = false, safe = false,
       } };
     },
   });
+  vm.runInContext(html.match(/<script id="kouhei-core">([\s\S]*?)<\/script>/)[1],context);
   vm.runInContext(html.match(/<script id="kouhei-diagnostics">([\s\S]*?)<\/script>/)[1],context);
   vm.runInContext(`
     const trace=KouheiDiagnostics.journal({getItem:()=>null,setItem(){}});const RUNTIMES=['primary','fallback'];const SAFE_LOCAL=${safe},MOBILE_LOCAL=${mobile};const RECOVERY_MESSAGE='端末内AIを停止しています';
     let runtimePromise=null,engine=null,loadedModel='',loadVersion=0,loading=false,restartRequired=false;
-    const state={model:${JSON.stringify(model)}},C={LIGHT_MODEL:'Qwen2.5-0.5B-Instruct-q4f16_1-MLC'};
+    const state={model:${JSON.stringify(model)}},C=KouheiCore;
     if(${smokePassed}){trace.startStartup('smoke',KouheiDiagnostics.SMOKE_MODEL);trace.finishStartup('complete');}
     const guard=()=>!loading,renderEngine=()=>{},renderDiagnostics=()=>{},toast=()=>{};
     const showEngineError=e=>{$('engineError').textContent=e.message;$('engineError').hidden=false;};
@@ -96,11 +97,25 @@ test('cancelling a pending reload cannot later mark the cancelled model ready', 
   assert.match(f.elements.get('engineError').textContent,/端末内AIを停止/);
 });
 
-test('mobile startup requires a successful inference test and rejects the larger model',async()=>{
+test('mobile startup requires a successful inference test and rejects the desktop model',async()=>{
   const first=fixture({mobile:true,model:'Qwen2.5-0.5B-Instruct-q4f16_1-MLC'});
   await first.run('loadModel()');assert.equal(first.imports.length,0);
-  const large=fixture({mobile:true,smokePassed:true});
+  const large=fixture({mobile:true,smokePassed:true,model:'Qwen3-1.7B-q4f16_1-MLC'});
   await large.run('loadModel()');assert.equal(large.imports.length,0);
+});
+
+test('mobile users can explicitly load Qwen3 and Qwen3.5 with a bounded context after the inference test',async()=>{
+  for(const model of ['Qwen3-0.6B-q4f16_1-MLC','Qwen3.5-0.8B-q4f16_1-MLC']){
+    const blocked=fixture({mobile:true,model});
+    await blocked.run('loadModel()');assert.equal(blocked.imports.length,0);
+    const allowed=fixture({mobile:true,smokePassed:true,model});
+    await allowed.run('loadModel()');
+    assert.equal(allowed.instances[0].reloadArguments[0],model);
+    assert.equal(allowed.instances[0].reloadArguments[1].context_window_size,2048);
+    assert.equal(allowed.run('loadedModel'),model);
+    assert.equal(allowed.run('trace.snapshot().startup.model'),model);
+    assert.equal(allowed.run('trace.snapshot().startup.status'),'complete');
+  }
 });
 
 test('the small-model test generates a short fixed reply, unloads, and unlocks the mobile Japanese model',async()=>{
