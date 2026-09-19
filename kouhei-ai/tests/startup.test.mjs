@@ -6,7 +6,7 @@ import { readFile } from 'node:fs/promises';
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 // Exercise the actual startup functions with a simulated runtime, without a GPU or download.
 const source = html.slice(html.indexOf('async function getRuntime()'), html.indexOf('function showEngineError(')).replace('import(url)', 'importRuntime(url)');
-function fixture({ reload = async () => {}, importFailure = false } = {}) {
+function fixture({ reload = async () => {}, importFailure = false, safe = false } = {}) {
   const elements = new Map(), instances = [], imports = [];
   const context = vm.createContext({
     setTimeout, clearTimeout, console,
@@ -27,7 +27,7 @@ function fixture({ reload = async () => {}, importFailure = false } = {}) {
     },
   });
   vm.runInContext(`
-    const RUNTIMES=['primary','fallback'];
+    const RUNTIMES=['primary','fallback'];const SAFE_LOCAL=${safe};const RECOVERY_MESSAGE='端末内AIを停止しています';
     let runtimePromise=null,engine=null,loadedModel='',loadVersion=0,loading=false;
     const state={model:'Qwen3-0.6B-q4f16_1-MLC'};
     const guard=()=>!loading,renderEngine=()=>{},toast=()=>{};
@@ -81,4 +81,14 @@ test('cancelling a pending reload cannot later mark the cancelled model ready', 
   assert.equal(f.run('loading'), false);
   assert.ok(f.instances[0].unloads >= 1);
   assert.equal(f.elements.has('engineDialog'), false);
+});
+
+ test('recovery mode does not import, initialize or load the local AI runtime', async () => {
+  const f = fixture({safe:true});
+  await f.run('loadModel()');
+  await f.run('checkRuntime()');
+  assert.equal(f.imports.length,0);
+  assert.equal(f.instances.length,0);
+  assert.equal(f.run('loading'),false);
+  assert.match(f.elements.get('engineError').textContent,/端末内AIを停止/);
 });
