@@ -52,7 +52,7 @@
     <div class="composer-wrap"><div class="composer-inner"><div class="modes" aria-label="相談モード"><button class="mode" data-mode="general" aria-pressed="true">相談</button><button class="mode" data-mode="work" aria-pressed="false">仕事</button><button class="mode" data-mode="english" aria-pressed="false">英語</button></div><form class="composer" id="chatForm"><label for="prompt" hidden>相談内容</label><textarea id="prompt" rows="2" maxlength="6000" placeholder="相談したいことを書いてください…" aria-label="相談内容"></textarea><div class="composer-footer"><span class="composer-hint" id="composerHint">端末内AI · 会話を外部に送信しません</span><button class="send" id="sendButton" type="submit" aria-label="送信"><svg><use href="#i-arrow"/></svg><span>送信</span></button></div></form><div class="disclaimer">AIの回答には誤りがあります。重要な判断は根拠を確認してください。</div></div></div>
   </main>
 </div>
-<dialog id="engineDialog"><div class="dialog-head"><h2>AIの設定</h2><button class="icon-btn" data-close aria-label="閉じる"><svg><use href="#i-close"/></svg></button></div><div class="dialog-body stack"><details id="diagnosticPanel"><summary>起動の診断</summary><section class="stack" style="margin-top:14px"><p class="help">モデルを取得せず、GPUで4個の整数を計算します。結果と処理段階はこのブラウザーに保存します。会話・メモ・接続トークンは診断に含めません。</p><button class="btn secondary" id="runDiagnostics">低負荷診断を実行</button><p class="help" id="diagnosticResult" role="status">診断は未実行です。</p><div class="row"><button class="btn outline" id="copyDiagnostics">診断結果をコピー</button><button class="btn outline" id="saveDiagnostics">診断結果を保存</button></div><details><summary>診断の詳細</summary><pre id="diagnosticDetails" style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:.75rem"></pre></details></section></details><div class="choice-grid"><button class="engine-choice" data-engine="local" aria-pressed="true"><strong>端末内AI</strong><span>APIキー不要・端末で生成</span></button><button class="engine-choice" data-engine="server" aria-pressed="false"><strong>外部AIサーバー</strong><span>自分のOpenAI接続先を使う</span></button></div><p id="recoveryNotice" class="notice" role="status" hidden>ページ停止への対応：iPhone・iPadでは端末内AIを起動しません。端末内AIの動作は調査中です。「低負荷診断」を実行して結果を確認してください。 · v1.0.3</p><div id="localFields" class="stack"><div class="field"><label for="localModel">モデル</label><select id="localModel"><option value="Qwen3-0.6B-q4f16_1-MLC">Qwen3 0.6B · 軽量</option><option value="Qwen3-1.7B-q4f16_1-MLC">Qwen3 1.7B · 品質重視</option></select><p class="help">WebGPU対応ブラウザーが必要です。初回通信は数百MB〜1GB以上、動作時は約1.4〜2GB以上のGPUメモリーが目安です。小型モデルのためChatGPTと回答品質は異なります。</p></div><p id="gpuStatus" class="help">起動時に端末の対応状況を確認します。</p><button class="btn" id="loadModel">モデルを読み込む</button><button class="btn secondary" id="checkRuntime">実行環境を確認（モデルDLなし）</button><p class="help">起動方式：ブラウザー直接実行 · v1.0.3</p><button class="btn secondary" id="unloadModel" hidden>AIを停止してメモリーを空ける</button></div><div id="serverFields" class="stack" hidden><div class="field"><label for="apiEndpoint">サーバーURL</label><input id="apiEndpoint" type="url" placeholder="https://your-server.example/api/chat" autocomplete="off"><p class="help">このアプリ用のAPIの完全なURLを入力します。OpenAIのAPIキーはサーバー側に設定します。</p></div><div class="field"><label for="accessToken">接続トークン</label><input id="accessToken" type="password" placeholder="サーバーに設定したアクセス用トークン" autocomplete="off"><p class="help">このタブのメモリー内だけで保持します。再読み込み後は再入力が必要です。API利用料はChatGPTの契約とは別です。</p></div><p class="help">外部AIには、今回の入力・直近の会話・自分の設定・関連する知識メモを送信します。接続先を確認してから有効にしてください。</p><button class="btn" id="connectServer">この接続先を使う</button><p class="help">接続用サーバーの起動方法は、同じフォルダーのREADMEに記載しています。</p></div><div class="progress-box" id="loadProgress" hidden><progress id="progress" max="1" value="0"></progress><p class="progress-text" id="progressText" role="status"></p><button class="btn secondary" id="cancelLoad" style="margin-top:10px">読み込みを中止</button></div><p id="engineError" class="small danger-text" role="alert" hidden></p></div></dialog>
+<dialog id="engineDialog"><div class="dialog-head"><h2>AIの設定</h2><button class="icon-btn" data-close aria-label="閉じる"><svg><use href="#i-close"/></svg></button></div><div class="dialog-body stack"><details id="diagnosticPanel" style="border:1px solid #c2e0d7;border-radius:12px;padding:14px"><summary style="font-weight:650;cursor:pointer">起動の診断 · v1.0.4</summary><section class="stack" style="margin-top:14px"><p class="help">モデルを取得せず、GPUで4個の整数を計算します。診断リンクからは自動で一度だけ実行し、結果と処理段階をこのブラウザーに保存します。会話・メモ・接続トークンは診断に含めません。</p><button class="btn secondary" id="runDiagnostics">低負荷診断を実行</button><p class="help" id="diagnosticResult" role="status">診断は未実行です。</p><div class="row" style="flex-wrap:wrap"><button class="btn outline" id="copyDiagnostics" disabled>診断結果をコピー</button><button class="btn outline" id="saveDiagnostics" disabled>診断結果を保存</button></div><p id="copyDiagnosticsStatus" class="help" role="status"></p><details id="diagnosticDetailsPanel"><summary>診断の詳細・手動コピー</summary><textarea id="diagnosticDetails" aria-label="共有する診断結果" readonly rows="10" style="width:100%;font:12px/1.5 ui-monospace,monospace;resize:vertical"></textarea></details></section></details><div class="choice-grid"><button class="engine-choice" data-engine="local" aria-pressed="true"><strong>端末内AI</strong><span>APIキー不要・端末で生成</span></button><button class="engine-choice" data-engine="server" aria-pressed="false"><strong>外部AIサーバー</strong><span>自分のOpenAI接続先を使う</span></button></div><p id="recoveryNotice" class="notice" role="status" hidden>ページ停止への対応：iPhone・iPadでは端末内AIを起動しません。端末内AIの動作は調査中です。上の診断結果をコピーして共有してください。 · v1.0.4</p><div id="localFields" class="stack"><div class="field"><label for="localModel">モデル</label><select id="localModel"><option value="Qwen3-0.6B-q4f16_1-MLC">Qwen3 0.6B · 軽量</option><option value="Qwen3-1.7B-q4f16_1-MLC">Qwen3 1.7B · 品質重視</option></select><p class="help">WebGPU対応ブラウザーが必要です。初回通信は数百MB〜1GB以上、動作時は約1.4〜2GB以上のGPUメモリーが目安です。小型モデルのためChatGPTと回答品質は異なります。</p></div><p id="gpuStatus" class="help">起動時に端末の対応状況を確認します。</p><button class="btn" id="loadModel">モデルを読み込む</button><button class="btn secondary" id="checkRuntime">実行環境を確認（モデルDLなし）</button><p class="help">起動方式：ブラウザー直接実行 · v1.0.4</p><button class="btn secondary" id="unloadModel" hidden>AIを停止してメモリーを空ける</button></div><div id="serverFields" class="stack" hidden><div class="field"><label for="apiEndpoint">サーバーURL</label><input id="apiEndpoint" type="url" placeholder="https://your-server.example/api/chat" autocomplete="off"><p class="help">このアプリ用のAPIの完全なURLを入力します。OpenAIのAPIキーはサーバー側に設定します。</p></div><div class="field"><label for="accessToken">接続トークン</label><input id="accessToken" type="password" placeholder="サーバーに設定したアクセス用トークン" autocomplete="off"><p class="help">このタブのメモリー内だけで保持します。再読み込み後は再入力が必要です。API利用料はChatGPTの契約とは別です。</p></div><p class="help">外部AIには、今回の入力・直近の会話・自分の設定・関連する知識メモを送信します。接続先を確認してから有効にしてください。</p><button class="btn" id="connectServer">この接続先を使う</button><p class="help">接続用サーバーの起動方法は、同じフォルダーのREADMEに記載しています。</p></div><div class="progress-box" id="loadProgress" hidden><progress id="progress" max="1" value="0"></progress><p class="progress-text" id="progressText" role="status"></p><button class="btn secondary" id="cancelLoad" style="margin-top:10px">読み込みを中止</button></div><p id="engineError" class="small danger-text" role="alert" hidden></p></div></dialog>
 <dialog id="profileDialog"><div class="dialog-head"><h2>自分の設定</h2><button class="icon-btn" data-close aria-label="閉じる"><svg><use href="#i-close"/></svg></button></div><form id="profileForm" class="dialog-body stack"><p class="help">回答に使う前提です。このブラウザーで編集・保存できます。</p><div class="field"><label for="profileName">呼び名（敬称を除く）</label><input id="profileName" maxlength="40" required></div><div class="field"><label for="profileRole">仕事・関心のあること</label><textarea id="profileRole" maxlength="400" rows="3"></textarea></div><div class="field"><label for="profileStyle">回答の好み</label><textarea id="profileStyle" maxlength="400" rows="3"></textarea></div><div class="field"><label for="profileEnglish">英語学習の前提</label><textarea id="profileEnglish" maxlength="300" rows="3"></textarea></div><button type="submit" class="btn">設定を保存</button></form></dialog>
 <dialog id="knowledgeDialog"><div class="dialog-head"><h2>知識メモ</h2><button class="icon-btn" data-close aria-label="閉じる"><svg><use href="#i-close"/></svg></button></div><div class="dialog-body stack"><p class="help">自分の方針や資料を追加すると、質問に関連する部分を参照します。ChatGPTの履歴とは自動連携しません。</p><form id="noteForm" class="stack"><div class="field"><label for="noteTitle">メモの名前</label><input id="noteTitle" maxlength="100" placeholder="例：仕事で大切にしていること" required></div><div class="field"><label for="noteText">内容</label><textarea id="noteText" maxlength="30000" rows="4" placeholder="覚えておいてほしい前提や、参考にする文章" required></textarea></div><button class="btn secondary" type="submit">メモを追加</button></form><label class="file-label">ファイルから取り込む<input id="knowledgeFile" type="file" accept=".txt,.md,.csv,.json,.xlsx"><span class="help">テキスト・CSV・JSON・Excel（最大8MB）<br>発言ストックのExcelは「発言ストック_全件」を読みます。</span></label><div id="docList" class="stack"></div></div></dialog>
 <dialog id="dataDialog"><div class="dialog-head"><h2>保存・バックアップ</h2><button class="icon-btn" data-close aria-label="閉じる"><svg><use href="#i-close"/></svg></button></div><div class="dialog-body stack"><p class="help">会話・設定・知識メモはこのブラウザーに保存されます。端末間の自動同期はありません。ブラウザーのデータを消すと失われます。</p><button class="btn" id="exportData"><svg><use href="#i-download"/></svg>すべてをJSONで保存</button><p class="help">バックアップには会話と知識メモが含まれます。接続トークンは含まれません。</p><label class="file-label">バックアップを読み込む<input type="file" id="restoreFile" accept=".json"><span class="help">確認後に現在の保存内容を置き換えます。</span></label><hr class="divider"><p class="help">端末内AIのモデルはブラウザーのキャッシュに保存されます。モデルのデータを削除する場合は、このサイトのストレージ設定から操作できます。</p></div></dialog>
@@ -100,20 +100,48 @@ const KouheiCore=(()=>{
 </script>
 <script id="kouhei-diagnostics">
 const KouheiDiagnostics=(()=>{
+  const VERSION='1.0.4';
+  const validCode=value=>typeof value==='string'&&/^[a-z0-9-]{1,70}$/.test(value);
+  function cleanResult(value){
+    if(!value||typeof value.ok!=='boolean')return null;
+    const result={ok:value.ok};
+    if(validCode(value.reason))result.reason=value.reason;
+    if(typeof value.errorName==='string'&&/^[A-Za-z]{1,60}$/.test(value.errorName))result.errorName=value.errorName;
+    if(typeof value.shaderF16==='boolean')result.shaderF16=value.shaderF16;
+    for(const key of ['maxBufferSize','maxStorageBufferBindingSize','maxComputeWorkgroupStorageSize','maxStorageBuffersPerShaderStage','maxComputeInvocationsPerWorkgroup'])if(Number.isSafeInteger(value[key])&&value[key]>=0)result[key]=value[key];
+    return result;
+  }
+  function cleanDiagnostic(value){
+    const d={version:VERSION,status:'not-run',stage:null,startedAt:null,completedAt:null,result:null};
+    if(!value||!['running','complete','interrupted'].includes(value.status))return d;
+    d.version=typeof value.version==='string'?value.version.slice(0,20):VERSION;
+    d.status=value.status;
+    d.stage=validCode(value.stage)?value.stage:null;
+    for(const key of ['startedAt','completedAt'])if(typeof value[key]==='string')d[key]=value[key].slice(0,30);
+    d.result=cleanResult(value.result);
+    if(d.status==='complete'&&!d.result)d.status='interrupted';
+    return d;
+  }
   function journal(storage){
     const key='kouhei-ai-diagnostics-v1';let saved={};
     try{saved=JSON.parse(storage.getItem(key)||'{}');}catch{}
     const clean=e=>e&&/^[a-z0-9-]{1,70}$/.test(e.code)&&typeof e.at==='string'?{code:e.code,at:e.at.slice(0,30)}:null;
     let events=Array.isArray(saved?.events)?saved.events.map(clean).filter(Boolean).slice(-60):[];
     let active=null,previous=clean(saved?.active)||clean(saved?.previous);
-    const snapshot=()=>({version:'1.0.3',active,previous,events:events.map(e=>({...e}))});
-    function write(){try{storage.setItem(key,JSON.stringify(snapshot()));}catch{}}
+    let diagnostic=cleanDiagnostic(saved?.diagnostic),storageWritable=true;
+    if(diagnostic.status==='running')diagnostic.status='interrupted';
+    const snapshot=()=>({version:VERSION,active,previous,events:events.map(e=>({...e})),diagnostic:cleanDiagnostic(diagnostic),storageWritable});
+    function write(){try{storage.setItem(key,JSON.stringify(snapshot()));storageWritable=true;}catch{storageWritable=false;}}
     function record(code){const e={code,at:new Date().toISOString()};if(!clean(e))return;events.push(e);events=events.slice(-60);write();}
     function start(code){active={code,at:new Date().toISOString()};record(code);}
     function step(code){if(active)active={code,at:new Date().toISOString()};record(code);}
     function end(code){record(code);active=null;write();}
-    return {start,step,end,record,snapshot};
+    function beginDiagnostic(){diagnostic={version:VERSION,status:'running',stage:'diagnostic-start',startedAt:new Date().toISOString(),completedAt:null,result:null};start('diagnostic-start');}
+    function stepDiagnostic(code){if(diagnostic.status!=='running'||!validCode(code))return;diagnostic.stage=code;step(code);}
+    function finishDiagnostic(result){diagnostic.result=cleanResult(result);diagnostic.status='complete';diagnostic.completedAt=new Date().toISOString();end(result.ok?'diagnostic-passed':result.reason||'gpu-test-error');}
+    return {start,step,end,record,snapshot,beginDiagnostic,stepDiagnostic,finishDiagnostic};
   }
+  function shouldAutoRun(diagnostic){return diagnostic.status==='not-run'||(diagnostic.status==='complete'&&diagnostic.version!==VERSION);}
   async function probeGPU(gpu,onStage=()=>{},timeoutMs=15000){
     let device,buffer,readback,timer,expired=false;
     const check=()=>{if(expired)throw new Error('GPU_TIMEOUT');};
@@ -122,7 +150,8 @@ const KouheiDiagnostics=(()=>{
       if(!gpu)return {ok:false,reason:'gpu-unavailable'};
       const adapter=await gpu.requestAdapter({powerPreference:'low-power'});check();
       if(!adapter)return {ok:false,reason:'gpu-adapter-unavailable'};
-      const info={shaderF16:adapter.features.has('shader-f16'),maxBufferSize:adapter.limits.maxBufferSize,maxStorageBufferBindingSize:adapter.limits.maxStorageBufferBindingSize};
+      const info={shaderF16:adapter.features.has('shader-f16')};
+      for(const key of ['maxBufferSize','maxStorageBufferBindingSize','maxComputeWorkgroupStorageSize','maxStorageBuffersPerShaderStage','maxComputeInvocationsPerWorkgroup'])info[key]=adapter.limits[key];
       onStage('gpu-device');device=await adapter.requestDevice();check();
       onStage('gpu-buffers');
       // Two 16-byte buffers; no model, tokenizer or external library is loaded.
@@ -145,17 +174,17 @@ const KouheiDiagnostics=(()=>{
     try{return await Promise.race([task,new Promise((_,reject)=>{timer=setTimeout(()=>{expired=true;device?.destroy();reject(new Error('GPU_TIMEOUT'));},timeoutMs);})]);}
     finally{clearTimeout(timer);}
   }
-  return {journal,probeGPU};
+  return {VERSION,journal,probeGPU,shouldAutoRun};
 })();
 </script>
 
 <script type="module">
 const C=KouheiCore,$=id=>document.getElementById(id),STORAGE='kouhei-ai-v1';
 const SAFE_LOCAL=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||new URL(location.href).searchParams.get('safe')==='1';
-const RECOVERY_MESSAGE='ページ停止の報告があったため、この端末では端末内AIを停止しています。端末内AIの動作を調査中です。下の低負荷診断で状態を確認できます。';
+const RECOVERY_MESSAGE='ページ停止の報告があったため、この端末では端末内AIを停止しています。端末内AIの動作を調査中です。「起動の診断」で状態を確認できます。';
 const RUNTIMES=['https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/lib/index.js','https://esm.sh/@mlc-ai/web-llm@0.2.85?bundle'];
-let runtimePromise=null,diagnosticBusy=false,diagnosticResult=null;
-let diagnosticStorage;try{diagnosticStorage=localStorage;}catch{diagnosticStorage={getItem:()=>null,setItem:()=>{}};}
+let runtimePromise=null,diagnosticBusy=false;
+let diagnosticStorage;try{diagnosticStorage=localStorage;}catch{diagnosticStorage={getItem:()=>null,setItem:()=>{throw new Error('Storage unavailable');}};}
 const trace=KouheiDiagnostics.journal(diagnosticStorage);trace.record('page-open');
 let state=C.newState(),engine=null,loadedModel='',loading=false,loadVersion=0,busy=false,aborter=null,sessionToken='',toastTimer,confirmResolve=null;
 try{const saved=localStorage.getItem(STORAGE);if(saved)state=C.normalizeState(JSON.parse(saved));}catch(e){$('storageNotice').hidden=false;$('storageNotice').textContent='保存データを読み込めませんでした。自動上書きを止めています。「保存・バックアップ」から復元できます。';}
@@ -170,7 +199,7 @@ function confirmAction(title,text){$('confirmTitle').textContent=title;$('confir
 function finishConfirm(yes){$('confirmDialog').close();confirmResolve?.(yes);confirmResolve=null;}
 function ready(){return state.engine==='local'?!!engine&&loadedModel===state.model&&!loading:!!sessionToken&&!!state.endpoint;}
 function renderEngine(){renderDiagnostics();if(SAFE_LOCAL||new URL(location.href).searchParams.has('diagnostics'))$('diagnosticPanel').open=true;if(SAFE_LOCAL)state.engine='server';$('recoveryNotice').hidden=!SAFE_LOCAL;document.querySelector('[data-engine="local"]').disabled=SAFE_LOCAL;document.querySelectorAll('[data-engine]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.engine===state.engine)));$('localFields').hidden=state.engine!=='local';$('serverFields').hidden=state.engine!=='server';$('localModel').value=state.model;$('apiEndpoint').value=state.endpoint;$('accessToken').value=sessionToken;$('loadModel').disabled=SAFE_LOCAL||loading||busy||diagnosticBusy;$('checkRuntime').disabled=SAFE_LOCAL||loading||busy||diagnosticBusy;$('loadModel').textContent=ready()&&state.engine==='local'?'モデルを再読み込み':'モデルを読み込む';$('unloadModel').hidden=!engine||loading;$('loadProgress').hidden=!loading;renderStatus();}
-function renderStatus(){if(SAFE_LOCAL)state.engine='server';const r=ready();$('engineStatus').textContent=loading?'処理中…':`${state.engine==='local'?'端末内AI':'外部AI'} · ${r?(state.engine==='local'?'使用可能':'設定済み'):'未'+(state.engine==='local'?'起動':'接続')}`;$('engineStatus').classList.toggle('ready',r);$('engineStatus').classList.toggle('loading',loading);$('setupCard').hidden=r;$('setupCard').querySelector('strong').textContent=state.engine==='local'?'端末内AIを準備しましょう':'外部AIの接続を設定しましょう';$('setupCard').querySelector('p').textContent=state.engine==='local'?'初回はモデルのダウンロードが必要です。Wi-Fi環境での利用をおすすめします。':(SAFE_LOCAL?RECOVERY_MESSAGE:'自分のサーバーURLと接続トークンを設定します。');$('setupCard').querySelector('button').textContent=state.engine==='server'?'接続設定を開く':'AIを起動する';$('composerHint').textContent=state.engine==='local'?'端末内AI · 会話を外部に送信しません':'外部AI · 入力と関連メモを接続先に送信';}
+function renderStatus(){if(SAFE_LOCAL)state.engine='server';const r=ready(),recovering=SAFE_LOCAL&&!r;$('engineStatus').textContent=recovering?'端末内AI · 調査中':loading?'処理中…':`${state.engine==='local'?'端末内AI':'外部AI'} · ${r?(state.engine==='local'?'使用可能':'設定済み'):'未'+(state.engine==='local'?'起動':'接続')}`;$('engineStatus').classList.toggle('ready',r);$('engineStatus').classList.toggle('loading',loading);$('setupCard').hidden=r;$('setupCard').querySelector('strong').textContent=recovering?'端末内AIの起動を調べています':state.engine==='local'?'端末内AIを準備しましょう':'外部AIの接続を設定しましょう';$('setupCard').querySelector('p').textContent=state.engine==='local'?'初回はモデルのダウンロードが必要です。Wi-Fi環境での利用をおすすめします。':(SAFE_LOCAL?RECOVERY_MESSAGE:'自分のサーバーURLと接続トークンを設定します。');$('setupCard').querySelector('button').textContent=recovering?'起動の診断を開く':state.engine==='server'?'接続設定を開く':'AIを起動する';$('composerHint').textContent=state.engine==='local'?'端末内AI · 会話を外部に送信しません':'外部AI · 入力と関連メモを接続先に送信';}
 function renderHistory(){$('historyList').replaceChildren();for(const c of [...state.chats].sort((a,b)=>b.updatedAt-a.updatedAt)){const b=document.createElement('button');b.className='history-item'+(c.id===state.currentId?' active':'');b.setAttribute('aria-current',String(c.id===state.currentId));const name=document.createElement('span');name.className='history-title';name.textContent=c.title;const date=document.createElement('span');date.className='history-date';date.textContent=new Date(c.updatedAt).toLocaleDateString('ja-JP',{month:'short',day:'numeric'});b.append(name,date);b.onclick=()=>{if(!guard())return;state.currentId=c.id;persist();render();toggleMenu(false);};$('historyList').append(b);}}
 function inline(el,text){for(const part of text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g)){if(part.startsWith('**')&&part.endsWith('**')){const b=document.createElement('strong');b.textContent=part.slice(2,-2);el.append(b);}else if(part.startsWith('`')&&part.endsWith('`')){const code=document.createElement('code');code.textContent=part.slice(1,-1);el.append(code);}else el.append(document.createTextNode(part));}}
 function markdown(target,text){target.replaceChildren();const lines=text.split('\n');let i=0;const cells=line=>line.trim().replace(/^\||\|$/g,'').split('|').map(v=>v.trim());while(i<lines.length){const line=lines[i];if(/^```/.test(line)){const pre=document.createElement('pre'),code=document.createElement('code');const codeLines=[];i++;while(i<lines.length&&!/^```/.test(lines[i]))codeLines.push(lines[i++]);code.textContent=codeLines.join('\n');pre.append(code);target.append(pre);i++;continue;}if(i+1<lines.length&&line.includes('|')&&/^\s*\|?\s*:?-{3,}:?\s*\|/.test(lines[i+1])){const wrap=document.createElement('div'),table=document.createElement('table'),head=document.createElement('tr');wrap.className='table-scroll';cells(line).forEach(s=>{const th=document.createElement('th');inline(th,s);head.append(th);});const thead=document.createElement('thead');thead.append(head);table.append(thead);const tbody=document.createElement('tbody');i+=2;while(i<lines.length&&lines[i].includes('|')&&lines[i].trim()){const tr=document.createElement('tr');cells(lines[i++]).forEach(s=>{const td=document.createElement('td');inline(td,s);tr.append(td);});tbody.append(tr);}table.append(tbody);wrap.append(table);target.append(wrap);continue;}if(/^[-*]\s|^\d+\.\s/.test(line)){const ordered=/^\d/.test(line),list=document.createElement(ordered?'ol':'ul'),pat=ordered?/^\d+\.\s/:/^[-*]\s/;while(i<lines.length&&pat.test(lines[i])){const li=document.createElement('li');inline(li,lines[i++].replace(pat,''));list.append(li);}target.append(list);continue;}if(line.trim()){const el=document.createElement(/^#{1,6} /.test(line)?'h3':'p');inline(el,line.replace(/^#{1,6} /,''));target.append(el);}i++;}}
@@ -178,22 +207,42 @@ function renderMessages(){$('messages').replaceChildren();$('welcome').hidden=ch
 function render(){renderHistory();renderMessages();$('chatTitle').textContent=chat().title;$('greeting').textContent=state.profile.name+'さん、';$('knowledgeCount').textContent=state.documents.length?String(state.documents.length):'';document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===chat().mode)));renderStatus();}
 function scrollBottom(){const el=$('chatScroll');el.scrollTop=el.scrollHeight;}
 function setBusy(value){busy=value;$('sendButton').classList.toggle('stop',value);$('sendButton').setAttribute('aria-label',value?'回答を中止':'送信');$('sendButton').querySelector('span').textContent=value?'中止':'送信';$('prompt').readOnly=value;document.querySelectorAll('[data-mode]').forEach(b=>b.disabled=value);}
-function diagnosticsReport(){return {appVersion:'1.0.3',runtimeVersion:'0.2.85',userAgent:navigator.userAgent,platform:navigator.platform,secureContext:window.isSecureContext,recoveryMode:SAFE_LOCAL,result:diagnosticResult,journal:trace.snapshot()};}
+function diagnosticsReport(){const journal=trace.snapshot();return {appVersion:KouheiDiagnostics.VERSION,runtimeVersion:'0.2.85',userAgent:navigator.userAgent,platform:navigator.platform,secureContext:window.isSecureContext,recoveryMode:SAFE_LOCAL,diagnosticState:journal.diagnostic.status,result:journal.diagnostic.result,journal};}
 function renderDiagnostics(){
+  const journal=trace.snapshot(),d=journal.diagnostic;
+  const stages={'diagnostic-start':'診断を開始','gpu-adapter':'GPUの対応を確認','gpu-device':'GPUの利用を開始','gpu-buffers':'小さな作業領域を準備','gpu-shader':'計算プログラムを準備','gpu-compute':'4個の整数を計算','gpu-readback':'計算結果を取得','gpu-passed':'計算結果を確認'};
   $('runDiagnostics').disabled=loading||busy||diagnosticBusy;
-  const previous=trace.snapshot().previous;
-  if(previous&&!diagnosticResult)$('diagnosticResult').textContent='前回の処理が未完了です：'+previous.code+'。ページを閉じた場合にも記録されるため、強制終了と断定はできません。';
-  $('diagnosticDetails').textContent=JSON.stringify(diagnosticsReport(),null,2);
+  $('runDiagnostics').textContent=diagnosticBusy?'診断中…':d.status==='not-run'?'低負荷診断を実行':'再診断する';
+  const shareable=d.status==='complete'||d.status==='interrupted';
+  $('copyDiagnostics').disabled=!shareable||diagnosticBusy;
+  $('saveDiagnostics').disabled=!shareable||diagnosticBusy;
+  let message='診断は未実行です。「低負荷診断を実行」を押してください。';
+  if(d.status==='running')message='確認中：'+(stages[d.stage]||d.stage)+'。最大約15秒で結果を表示します。';
+  else if(d.status==='interrupted')message='前回は「'+(stages[d.stage]||d.stage||'診断開始')+'」の段階で未完了になりました。再実行せず、この結果をコピーできます。ページ移動でも起きるため、クラッシュとは断定できません。';
+  else if(d.status==='complete'){
+    const result=d.result;
+    message=result.ok?'診断完了：GPUの小規模計算に成功しました。LLMの起動や空きメモリー量を保証する結果ではありません。':result.reason==='gpu-unavailable'?'診断完了：このページではWebGPUを利用できません。':result.reason==='gpu-adapter-unavailable'?'診断完了：利用できるGPUが見つかりませんでした。':result.reason==='gpu-timeout'?'診断完了：GPUの処理が15秒以内に終わりませんでした。':'診断完了：GPUの計算中にエラーが発生しました。';
+    message+=' 「診断結果をコピー」で共有してください。';
+  }else if(journal.previous)message+=' 前回の未完了処理：'+journal.previous.code+'。';
+  if(!journal.storageWritable)message+=' このブラウザーには結果を保存できません。ページを閉じる前にコピーしてください。';
+  $('diagnosticResult').textContent=message;
+  $('diagnosticDetails').value=JSON.stringify(diagnosticsReport(),null,2);
 }
-async function runDiagnostics(){
-  if(!guard())return;diagnosticBusy=true;trace.start('diagnostic-start');renderEngine();
-  $('diagnosticResult').textContent='低負荷でGPUを確認しています…';
+async function runDiagnostics(source='button'){
+  trace.record(source==='auto'?'diagnostic-auto-requested':'diagnostic-button-requested');
+  if(!guard()){trace.record('diagnostic-blocked-busy');$('diagnosticResult').textContent='別の処理が実行中のため診断を開始できません。処理の完了後に再診断してください。';return;}
+  diagnosticBusy=true;trace.beginDiagnostic();$('copyDiagnosticsStatus').textContent='';renderEngine();
   try{
-    diagnosticResult=await KouheiDiagnostics.probeGPU(window.isSecureContext?navigator.gpu:null,code=>{trace.step(code);$('diagnosticResult').textContent='確認中：'+code;renderDiagnostics();});
-    trace.end(diagnosticResult.ok?'diagnostic-passed':diagnosticResult.reason);
-    $('diagnosticResult').textContent=diagnosticResult.ok?'GPUの小規模計算：成功。モデルの読み込み・回答生成の成功を保証する結果ではありません。':'利用できるWebGPUが見つかりませんでした。診断結果をコピーして共有できます。';
-  }catch(e){diagnosticResult={ok:false,reason:e.message==='GPU_TIMEOUT'?'gpu-timeout':e.message==='GPU_RESULT_MISMATCH'?'gpu-result-mismatch':'gpu-test-error',errorName:e.name};trace.end(diagnosticResult.reason);$('diagnosticResult').textContent='GPU診断が完了しませんでした。診断結果をコピーして共有してください。';}
+    const result=await KouheiDiagnostics.probeGPU(window.isSecureContext?navigator.gpu:null,code=>{trace.stepDiagnostic(code);renderDiagnostics();});
+    trace.finishDiagnostic(result);
+  }catch(e){trace.finishDiagnostic({ok:false,reason:e.message==='GPU_TIMEOUT'?'gpu-timeout':e.message==='GPU_RESULT_MISMATCH'?'gpu-result-mismatch':'gpu-test-error',errorName:e.name});}
   finally{diagnosticBusy=false;renderEngine();}
+}
+function copyDiagnostics(){
+  const d=trace.snapshot().diagnostic;
+  if(d.status!=='complete'&&d.status!=='interrupted'){renderDiagnostics();return;}
+  const fallback=()=>{$('diagnosticDetailsPanel').open=true;$('diagnosticDetails').focus();$('diagnosticDetails').select();$('copyDiagnosticsStatus').textContent='下の診断結果を長押ししてコピーしてください。';};
+  try{navigator.clipboard.writeText(JSON.stringify(diagnosticsReport(),null,2)).then(()=>{$('copyDiagnosticsStatus').textContent='コピーしました。このチャットに貼り付けてください。';},fallback);}catch{fallback();}
 }
 // Use the supported main-window engine. Blob module workers failed on the reported device.
 async function getRuntime(){
@@ -270,7 +319,7 @@ async function xlsxText(file){const bytes=new Uint8Array(await file.arrayBuffer(
     async function read(name){const e=entries.get(name);if(!e)return '';if(e.plain>24000000||e.pos+30>bytes.length)throw new Error('展開するExcelの内容が大きすぎます。');const start=e.pos+30+v.getUint16(e.pos+26,true)+v.getUint16(e.pos+28,true);if(start+e.size>bytes.length)throw new Error('Excelファイルが壊れています。');let data=bytes.slice(start,start+e.size);if(e.method===8){let ds;try{ds=new DecompressionStream('deflate-raw');}catch{throw new Error('このブラウザーではExcelを展開できません。CSV形式で保存して取り込んでください。');}const reader=new Blob([data]).stream().pipeThrough(ds).getReader(),chunks=[];let total=0;while(true){const part=await reader.read();if(part.done)break;total+=part.value.length;if(total>24000000){await reader.cancel();throw new Error('Excelの展開上限を超えました。');}chunks.push(part.value);}data=new Uint8Array(total);let i=0;for(const c of chunks){data.set(c,i);i+=c.length;}}else if(e.method!==0)throw new Error('対応していないExcelの圧縮形式です。');return decoder.decode(data);}
     const xml=text=>{const doc=new DOMParser().parseFromString(text,'application/xml');if(doc.querySelector('parsererror'))throw new Error('ExcelのXML形式が不正です。');return doc;};const book=xml(await read('xl/workbook.xml')),sheets=[...book.getElementsByTagName('sheet')],sheet=sheets.find(s=>s.getAttribute('name')==='発言ストック_全件')||sheets[0];if(!sheet)throw new Error('Excelにシートがありません。');const rels=xml(await read('xl/_rels/workbook.xml.rels'));const relation=[...rels.getElementsByTagName('Relationship')].find(r=>r.getAttribute('Id')===sheet.getAttribute('r:id'));const target=relation?.getAttribute('Target');if(!target)throw new Error('シートの参照先がありません。');const path=target.startsWith('/')?target.slice(1):'xl/'+target.replace(/^\.\//,'');const sharedText=await read('xl/sharedStrings.xml'),shared=sharedText?[...xml(sharedText).getElementsByTagName('si')].map(s=>[...s.getElementsByTagName('t')].map(t=>t.textContent).join('')):[];const table=xml(await read(path));const rows=[...table.getElementsByTagName('row')].slice(0,20000).map(r=>{const row=[];for(const cell of r.getElementsByTagName('c')){const ref=cell.getAttribute('r')||'A1',letters=ref.match(/^[A-Z]+/)?.[0]||'A';let col=0;for(const l of letters)col=col*26+l.charCodeAt(0)-64;if(col>500)continue;const type=cell.getAttribute('t'),val=cell.getElementsByTagName('v')[0]?.textContent||'';row[col-1]=type==='s'?(shared[Number(val)]||''):type==='inlineStr'?[...cell.getElementsByTagName('t')].map(t=>t.textContent).join(''):val;}return row;});if(rows[0])for(let col=0;col<rows[0].length;col++)if(/日時|日付/.test(rows[0][col]||''))for(let r=1;r<rows.length;r++){const n=Number(rows[r][col]);if(Number.isFinite(n)&&n>30000&&n<100000)rows[r][col]=new Date(Math.round((n-25569)*86400000)).toISOString().replace('T',' ').slice(0,19)+'（セル値）';}return 'シート: '+sheet.getAttribute('name')+'\n'+C.recordsToText(rows);}
 function download(name,text,type){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;(document.querySelector('dialog[open]')||document.body).append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
-$('runDiagnostics').onclick=runDiagnostics;$('copyDiagnostics').onclick=()=>navigator.clipboard.writeText(JSON.stringify(diagnosticsReport(),null,2)).then(()=>toast('診断結果をコピーしました')).catch(()=>toast('コピーできません。診断結果を保存してください。'));$('saveDiagnostics').onclick=()=>download('kouhei-ai-diagnostics.json',JSON.stringify(diagnosticsReport(),null,2),'application/json');
+$('runDiagnostics').onclick=()=>runDiagnostics('button');$('copyDiagnostics').onclick=copyDiagnostics;$('saveDiagnostics').onclick=()=>download('kouhei-ai-diagnostics.json',JSON.stringify(diagnosticsReport(),null,2),'application/json');
 $('menuButton').onclick=()=>toggleMenu(!$('sidebar').classList.contains('open'));$('sidebarOverlay').onclick=()=>toggleMenu(false);document.querySelectorAll('[data-dialog]').forEach(b=>b.onclick=()=>openDialog(b.dataset.dialog));document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());$('confirmCancel').onclick=()=>finishConfirm(false);$('confirmOK').onclick=()=>finishConfirm(true);$('confirmDialog').addEventListener('cancel',e=>{e.preventDefault();finishConfirm(false);});
 $('newChat').onclick=()=>{if(!guard())return;if(state.chats.length>=100){toast('会話は100件までです。先に不要な会話を削除してください。');return;}const c=C.newChat();state.chats.unshift(c);state.currentId=c.id;persist();render();toggleMenu(false);$('prompt').value='';$('prompt').focus();};
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{if(!guard())return;chat().mode=b.dataset.mode;persist();render();});
@@ -284,9 +333,16 @@ $('exportData').onclick=()=>download('kouhei-ai-backup-'+new Date().toISOString(
 $('chatMore').onclick=()=>openDialog('chatDialog');$('renameChat').onclick=()=>{if(!guard())return;chat().title=$('renameInput').value.trim()||'会話';persist();render();$('chatDialog').close();};$('exportChat').onclick=()=>download('kouhei-ai-conversation.txt',chat().messages.filter(m=>m.content).map(m=>(m.role==='user'?state.profile.name+'さん':'Kouhei AI')+'\n'+C.stripThinking(m.content)).join('\n\n'),'text/plain;charset=utf-8');$('deleteChat').onclick=async()=>{if(!guard()||!await confirmAction('会話を削除','この会話を削除します。バックアップがなければ元に戻せません。'))return;state.chats=state.chats.filter(c=>c.id!==state.currentId);if(!state.chats.length)state.chats=[C.newChat()];state.currentId=state.chats[0].id;persist();render();$('chatDialog').close();};
 window.addEventListener('pagehide',()=>{sessionToken='';$('accessToken').value='';loadVersion++;loading=false;aborter?.abort();engine?.unload().catch(()=>{});engine=null;loadedModel='';window.speechSynthesis?.cancel();});
 window.addEventListener('pageshow',()=>renderStatus());
-window.addEventListener('error',()=>{if(trace.snapshot().active)trace.step('javascript-error');});
-window.addEventListener('unhandledrejection',()=>{if(trace.snapshot().active)trace.step('unhandled-rejection');});
-render();if(new URL(location.href).searchParams.has('diagnostics'))openDialog('engineDialog');
+window.addEventListener('error',()=>{trace.step('javascript-error');renderDiagnostics();});
+window.addEventListener('unhandledrejection',()=>{trace.step('unhandled-rejection');renderDiagnostics();});
+trace.record('ui-ready');render();
+if(new URL(location.href).searchParams.has('diagnostics')){
+  openDialog('engineDialog');
+  if(KouheiDiagnostics.shouldAutoRun(trace.snapshot().diagnostic)){
+    $('diagnosticResult').textContent='自動診断を開始します…';
+    setTimeout(()=>runDiagnostics('auto'),100);
+  }
+}
 </script>
 </body>
 </html>
