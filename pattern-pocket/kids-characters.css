@@ -1,0 +1,20 @@
+
+.kids-hero-character{float:right;width:132px;height:157px;object-fit:cover;object-position:center 25%;border:4px solid #fff;border-radius:26px;transform:rotate(3deg);margin:0 0 8px 14px;box-shadow:0 8px 20px #33216455}
+.kids-coach{display:flex;align-items:center;gap:14px;padding:12px 15px;margin:8px 0 20px;background:var(--buddy-bg,#dff1ff);border:2px solid #e0d7fb;border-radius:18px}
+.kids-coach img{width:83px;height:108px;object-fit:cover;object-position:center top;border-radius:15px;border:3px solid white;flex-shrink:0}
+.kids-coach>div{flex:1;min-width:0}
+.kids-coach b{font-size:12px;color:#5940bc;background:white;border-radius:99px;padding:5px 10px;display:inline-block}
+.kids-coach p{font-size:14px;line-height:1.7;font-weight:750;margin:9px 0 6px}
+.kids-coach button{border:0;background:transparent;color:#5740b9;font-weight:700;text-decoration:underline;text-underline-offset:3px;font-size:12px;min-height:36px}
+.kids-gallery{scroll-margin-top:20px;border:2px solid #ead3ad;background:#fffdf6}
+.kids-gallery h2{line-height:1.5}.kids-gallery>p{font-size:13px;color:#635c7a;margin:-4px 0 17px;line-height:1.7}
+.kids-gallery-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.kids-buddy{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px;min-width:0;min-height:211px;background:var(--buddy-bg);border:3px solid transparent;border-radius:17px;color:#282440;transition:transform .16s,box-shadow .16s}
+.kids-buddy img{display:block;width:100%;height:130px;object-fit:cover;object-position:center top;border-radius:11px;border:2px solid white}
+.kids-buddy strong{font-size:17px}.kids-buddy small{font-size:10px;min-height:26px;line-height:1.3;text-align:center;color:#4b445d}
+.kids-buddy[aria-pressed="true"]{border-color:#7355db;box-shadow:0 0 0 2px #e3dafa;transform:translateY(-2px)}
+.kids-buddy[aria-pressed="true"]:after{content:"✓ 相棒";position:absolute;top:10px;right:9px;font-size:10px;font-weight:900;background:#6143ca;color:white;padding:4px 7px;border-radius:99px}
+.kids-feedback-character{display:flex;align-items:center;gap:9px;background:var(--buddy-bg,#fff);padding:5px 10px;border-radius:13px;margin:17px 0 8px;color:#46335c;font-size:12px;font-weight:800}
+.kids-feedback-character[hidden]{display:none!important}.kids-feedback-character img{width:51px;height:60px;border-radius:10px;object-fit:cover;object-position:center top;border:2px solid white}
+@media(max-width:640px){.kids-hero-character{width:94px;height:115px;border-radius:18px;margin:0 0 8px 8px}.kids-coach{gap:10px;padding:9px 12px}.kids-coach img{width:64px;height:84px}.kids-coach p{font-size:12px;margin:5px 0 0}.kids-coach b{font-size:10px}.kids-gallery{padding:18px 11px}.kids-gallery h2{font-size:16px}.kids-gallery>p{font-size:11px}.kids-gallery-grid{display:flex;gap:9px;overflow-x:auto;padding:4px 3px 13px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}.kids-buddy{min-width:124px;width:124px;flex-shrink:0;min-height:194px;scroll-snap-align:center}.kids-buddy img{height:118px}.kids-buddy strong{font-size:16px}}
+@media(prefers-reduced-motion:reduce){.kids-buddy{transition:none!important}}
