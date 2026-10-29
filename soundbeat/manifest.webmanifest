@@ -1,0 +1,19 @@
+{
+  "name": "SoundBeat｜英語のリズムと弱い音の練習",
+  "short_name": "SoundBeat",
+  "id": "./index.html",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7f9fc",
+  "theme_color": "#0c1d33",
+  "lang": "ja",
+  "description": "LINE登録不要・広告なしの英語リズムと弱形リスニング練習",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
